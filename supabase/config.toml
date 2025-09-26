@@ -2,3 +2,6 @@ project_id = "inwsvuynfkxhswtzgggq"
 
 [functions.sync-systembolaget-data]
 verify_jwt = false
+
+[functions.test-wine-insert]
+verify_jwt = false

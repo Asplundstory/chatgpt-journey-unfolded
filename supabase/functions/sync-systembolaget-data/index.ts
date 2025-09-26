@@ -292,40 +292,70 @@ async function streamProcessProducts(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    // Try the main endpoint first, then fallback
-    let response;
-    console.log('Fetching products with streaming approach...');
+    console.log('Testing API endpoints...');
     
-    try {
-      response = await fetch('https://susbolaget.emrik.org/v1/products', {
-        headers: {
-          'User-Agent': 'WineInvestmentApp/1.0',
-          'Accept': 'application/json'
+    // Try multiple API endpoints in order of preference
+    const endpoints = [
+      'https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search?page=1&size=30&categoryLevel1=Vin',
+      'https://susbolaget.emrik.org/v1/products',
+      'https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json'
+    ];
+
+    let allProducts = [];
+    let successfulEndpoint = '';
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying endpoint: ${endpoint}`);
+        
+        const response = await fetch(endpoint, {
+          headers: {
+            'User-Agent': 'WineInvestmentApp/1.0',
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          console.log(`Endpoint failed: ${response.status} ${response.statusText}`);
+          continue;
         }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Primary API failed: ${response.status} ${response.statusText}`);
-      }
-    } catch (primaryError) {
-      console.log('Primary API failed, trying GitHub fallback...');
-      response = await fetch('https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json');
-      
-      if (!response.ok) {
-        throw new Error(`All APIs failed. GitHub fallback: ${response.status} ${response.statusText}`);
+        
+        const data = await response.json();
+        console.log(`Response type: ${typeof data}, is array: ${Array.isArray(data)}`);
+        
+        // Handle different response structures
+        if (Array.isArray(data)) {
+          allProducts = data;
+        } else if (data.products && Array.isArray(data.products)) {
+          allProducts = data.products;
+        } else if (data.productSearchResult && data.productSearchResult.products) {
+          allProducts = data.productSearchResult.products;
+        } else if (data.data && Array.isArray(data.data)) {
+          allProducts = data.data;
+        } else {
+          console.log('Unknown response structure:', Object.keys(data));
+          continue;
+        }
+        
+        if (allProducts.length > 0) {
+          successfulEndpoint = endpoint;
+          console.log(`Successfully fetched ${allProducts.length} products from ${endpoint}`);
+          console.log('Sample product:', JSON.stringify(allProducts[0], null, 2));
+          break;
+        }
+        
+      } catch (error) {
+        console.log(`Error with endpoint ${endpoint}:`, error instanceof Error ? error.message : String(error));
+        continue;
       }
     }
 
-    // Parse JSON response
-    const data = await response.json();
-    const allProducts = data.products || data;
-    
-    if (!Array.isArray(allProducts)) {
-      throw new Error('Invalid response format - expected array of products');
+    if (!allProducts || allProducts.length === 0) {
+      throw new Error('No products found from any API endpoint');
     }
 
     const totalProductCount = allProducts.length;
-    console.log(`Found ${totalProductCount} total products`);
+    console.log(`Found ${totalProductCount} total products from ${successfulEndpoint}`);
     
     // Update sync status with total count
     await supabase
@@ -337,7 +367,7 @@ async function streamProcessProducts(supabase: any, syncId: string) {
       .eq('id', syncId);
 
     // Process in smaller chunks to prevent memory issues
-    const chunkSize = 100; // Reduced chunk size
+    const chunkSize = 50; // Even smaller chunks
     const chunks = Math.ceil(totalProductCount / chunkSize);
     
     for (let i = 0; i < totalProductCount; i += chunkSize) {
@@ -364,10 +394,10 @@ async function streamProcessProducts(supabase: any, syncId: string) {
           
         console.log(`Progress: ${processedCount}/${totalProductCount} processed, ${totalWinesInserted} wines inserted`);
         
-        // Clear chunk from memory and give runtime a break
-        if (chunkNum % 10 === 0) {
+        // Memory cleanup break every 5 chunks
+        if (chunkNum % 5 === 0) {
           console.log('Memory cleanup break...');
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
         
       } catch (chunkError) {
