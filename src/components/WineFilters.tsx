@@ -67,10 +67,9 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               onValueChange={(value) => updateFilter("category", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Välj kategori" />
+                <SelectValue placeholder="Alla kategorier" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
-                <SelectItem value="">Alla kategorier</SelectItem>
                 <SelectItem value="rött vin">Rött vin</SelectItem>
                 <SelectItem value="vitt vin">Vitt vin</SelectItem>
                 <SelectItem value="rosé">Rosé</SelectItem>
@@ -88,10 +87,9 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               onValueChange={(value) => updateFilter("country", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Välj land" />
+                <SelectValue placeholder="Alla länder" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
-                <SelectItem value="">Alla länder</SelectItem>
                 <SelectItem value="frankrike">Frankrike</SelectItem>
                 <SelectItem value="italien">Italien</SelectItem>
                 <SelectItem value="spanien">Spanien</SelectItem>
@@ -111,10 +109,9 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               onValueChange={(value) => updateFilter("vintage", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Välj årgång" />
+                <SelectValue placeholder="Alla årgångar" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
-                <SelectItem value="">Alla årgångar</SelectItem>
                 <SelectItem value="2023">2023</SelectItem>
                 <SelectItem value="2022">2022</SelectItem>
                 <SelectItem value="2021">2021</SelectItem>
@@ -136,10 +133,9 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               onValueChange={(value) => updateFilter("drinkingWindowStart", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Välj startår" />
+                <SelectValue placeholder="Alla startår" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
-                <SelectItem value="">Alla</SelectItem>
                 <SelectItem value="2024">2024</SelectItem>
                 <SelectItem value="2025">2025</SelectItem>
                 <SelectItem value="2026">2026</SelectItem>
@@ -158,10 +154,9 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               onValueChange={(value) => updateFilter("drinkingWindowEnd", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Välj slutår" />
+                <SelectValue placeholder="Alla slutår" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
-                <SelectItem value="">Alla</SelectItem>
                 <SelectItem value="2025">2025</SelectItem>
                 <SelectItem value="2030">2030</SelectItem>
                 <SelectItem value="2035">2035</SelectItem>
