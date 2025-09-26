@@ -4,17 +4,21 @@ export interface SystembolagetProduct {
   productId: string;
   productNameThin: string;
   productNameBold: string;
-  category1: string;
-  category2?: string;
+  categoryLevel1: string;
+  categoryLevel2?: string;
+  categoryLevel3?: string;
+  customCategoryTitle?: string;
   price: number;
-  alcohol: number;
+  alcoholPercentage: number;
   volume: number;
   country: string;
-  productGroup: string;
+  originLevel1?: string;
+  originLevel2?: string;
   taste?: string;
   color?: string;
   vintage?: number;
   assortmentText?: string;
+  producerName?: string;
   // Additional fields we'll calculate/estimate
   investmentScore?: number;
   valueAppreciation?: number;
@@ -68,11 +72,11 @@ const calculateInvestmentMetrics = (product: SystembolagetProduct): Partial<Wine
   let investmentScore = 5; // Base score
   
   // Premium categories get higher scores
-  if (product.category1?.toLowerCase().includes('rött vin') && product.price > 500) {
+  if (product.categoryLevel1?.toLowerCase().includes('rött vin') && product.price > 500) {
     investmentScore += 2;
   }
-  if (product.category1?.toLowerCase().includes('champagne') || 
-      product.category1?.toLowerCase().includes('mousserande vin')) {
+  if (product.categoryLevel1?.toLowerCase().includes('champagne') || 
+      product.categoryLevel1?.toLowerCase().includes('mousserande vin')) {
     investmentScore += 1;
   }
   if (product.price > 1000) investmentScore += 2;
@@ -118,12 +122,12 @@ const transformProduct = (product: SystembolagetProduct, index: number): Wine =>
   return {
     id: parseInt(product.productId) || index,
     name: product.productNameThin || 'Okänt vin',
-    producer: product.productNameBold || 'Okänd producent',
-    category: product.category1 || 'Okänd kategori',
+    producer: product.producerName || product.productNameBold || 'Okänd producent',
+    category: product.categoryLevel1 || 'Okänd kategori',
     price: product.price || 0,
-    alcoholContent: product.alcohol || 0,
+    alcoholContent: product.alcoholPercentage || 0,
     country: product.country || 'Okänt land',
-    region: product.productGroup || 'Okänd region',
+    region: product.originLevel1 || product.originLevel2 || 'Okänd region',
     vintage: product.vintage || currentYear - 2,
     description: product.taste || product.assortmentText || 'Ingen beskrivning tillgänglig',
     image: '/placeholder.svg',
@@ -166,12 +170,14 @@ export const useSystembolagetData = () => {
         
         const data: SystembolagetProduct[] = await response.json();
         
-        // Filter for wine products and limit to first 1000 for performance
+        // Filter for wine products specifically - look for actual wine categories
+        const wineCategories = ['Rött vin', 'Vitt vin', 'Mousserande vin', 'Rosé', 'Starkvin', 'Glögg & Glühwein'];
         const wineProducts = data
           .filter(product => 
-            product.category1?.toLowerCase().includes('vin') ||
-            product.category1?.toLowerCase().includes('champagne') ||
-            product.category1?.toLowerCase().includes('mousserande')
+            wineCategories.some(category => 
+              product.categoryLevel1?.includes(category) || 
+              product.customCategoryTitle?.includes(category)
+            )
           )
           .slice(0, 1000); // Limit for performance
         
