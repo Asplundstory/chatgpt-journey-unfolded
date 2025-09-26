@@ -296,17 +296,42 @@ async function performFullSync(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    // Fetch products from GitHub raw JSON file (updated Systembolaget data mirror)
-    console.log('Fetching ALL products from AlexGustafsson GitHub mirror...');
-    const response = await fetch('https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json');
+    // Fetch products from C4illin's public API (susbolaget.emrik.org)
+    console.log('Fetching ALL products from C4illin public API...');
     
-    if (!response.ok) {
-      throw new Error(`GitHub API request failed: ${response.status} ${response.statusText}`);
+    // Try the main endpoint first
+    let response;
+    let allProducts;
+    
+    try {
+      response = await fetch('https://susbolaget.emrik.org/v1/products', {
+        headers: {
+          'User-Agent': 'WineInvestmentApp/1.0',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Primary API failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      allProducts = data.products || data; // Handle different response formats
+      
+    } catch (primaryError) {
+      console.log('Primary API failed, trying GitHub raw data fallback...');
+      
+      // Fallback to GitHub raw data
+      response = await fetch('https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json');
+      
+      if (!response.ok) {
+        throw new Error(`All APIs failed. GitHub fallback: ${response.status} ${response.statusText}`);
+      }
+      
+      allProducts = await response.json();
     }
-
-    const allProducts = await response.json();
     
-    console.log(`Fetched ${allProducts.length} total products from GitHub mirror`);
+    console.log(`Fetched ${allProducts.length} total products from API`);
     console.log('Sample product structure:', JSON.stringify(allProducts[0], null, 2));
     
     const totalProductCount = allProducts.length;
