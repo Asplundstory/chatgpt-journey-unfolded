@@ -74,6 +74,54 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_status: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          last_product_processed: string | null
+          processed_products: number | null
+          started_at: string
+          status: string
+          sync_type: string
+          total_products: number | null
+          updated_at: string
+          wines_inserted: number | null
+          wines_updated: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_product_processed?: string | null
+          processed_products?: number | null
+          started_at?: string
+          status?: string
+          sync_type: string
+          total_products?: number | null
+          updated_at?: string
+          wines_inserted?: number | null
+          wines_updated?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_product_processed?: string | null
+          processed_products?: number | null
+          started_at?: string
+          status?: string
+          sync_type?: string
+          total_products?: number | null
+          updated_at?: string
+          wines_inserted?: number | null
+          wines_updated?: number | null
+        }
+        Relationships: []
+      }
       user_favorites: {
         Row: {
           created_at: string

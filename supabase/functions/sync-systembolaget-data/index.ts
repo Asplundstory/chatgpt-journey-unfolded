@@ -1,110 +1,214 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface SystembolagetProduct {
+  ProductId: string;
+  ProductNumber: string;
+  ProductNameBold: string;
+  ProductNameThin?: string;
+  Category?: string;
+  ProductLaunchDate?: string;
+  ProducerName?: string;
+  SupplierName?: string;
+  IsKosher?: boolean;
+  BottleTextShort?: string;
+  RestrictedParcelQuantity?: number;
+  IsManufacturingCountry?: boolean;
+  IsRegionalRestricted?: boolean;
+  IsInStoreSearchAssortment?: boolean;
+  IsTemporaryOutOfStock?: boolean;
+  AlcoholPercentage?: number;
+  PriceIncVat?: number;
+  VintageYear?: number;
+  SubCategory?: string;
+  Country?: string;
+  Region1?: string;
 }
 
-// Realistisk vindata baserad på verkliga Systembolaget-produkter
-const wineTemplates = [
-  {
-    name: "Château Margaux", producer: "Château Margaux", category: "Rött vin", country: "Frankrike", region: "Bordeaux",
-    vintage: 2018, alcohol: 13.5, price: 4200, description: "Elegant Bordeaux med komplex smak av svarta bär, kryddor och ek."
-  },
-  {
-    name: "Barolo DOCG", producer: "Giuseppe Rinaldi", category: "Rött vin", country: "Italien", region: "Piemonte", 
-    vintage: 2019, alcohol: 14.0, price: 650, description: "Kraftfull italiensk Nebbiolo med toner av körsbär och rosor."
-  },
-  {
-    name: "Dom Pérignon Vintage", producer: "Moët & Chandon", category: "Mousserande vin", country: "Frankrike", region: "Champagne",
-    vintage: 2013, alcohol: 12.5, price: 2100, description: "Prestigefylld champagne med brioche, citrus och mineralitet."
-  },
-  {
-    name: "Opus One", producer: "Opus One Winery", category: "Rött vin", country: "USA", region: "Napa Valley",
-    vintage: 2019, alcohol: 14.5, price: 3100, description: "Kultigt Bordeaux-blend från Californien med svarta bär och vanilj."
-  },
-  {
-    name: "Sancerre Les Monts Damnés", producer: "Henri Bourgeois", category: "Vitt vin", country: "Frankrike", region: "Loire",
-    vintage: 2022, alcohol: 12.5, price: 280, description: "Mineralisk Sauvignon Blanc med citrus och gräsliga toner."
-  },
-  {
-    name: "Rioja Gran Reserva", producer: "Marqués de Riscal", category: "Rött vin", country: "Spanien", region: "Rioja",
-    vintage: 2016, alcohol: 13.5, price: 340, description: "Traditionell spansk reserva med vanilj, läder och mörka frukter."
-  },
-  {
-    name: "Chablis Premier Cru", producer: "William Fèvre", category: "Vitt vin", country: "Frankrike", region: "Bourgogne",
-    vintage: 2021, alcohol: 13.0, price: 420, description: "Elegant Chardonnay med mineraler, citrus och en viss komplexitet."
-  },
-  {
-    name: "Amarone della Valpolicella", producer: "Allegrini", category: "Rött vin", country: "Italien", region: "Veneto",
-    vintage: 2018, alcohol: 15.5, price: 580, description: "Kraftfull Amarone med torkade druvor, mörka frukter och kryddor."
-  },
-  {
-    name: "Puligny-Montrachet", producer: "Louis Jadot", category: "Vitt vin", country: "Frankrike", region: "Bourgogne",
-    vintage: 2020, alcohol: 13.0, price: 850, description: "Premium Chardonnay med hasselnötter, citrus och mineralitet."
-  },
-  {
-    name: "Châteauneuf-du-Pape", producer: "Domaine de la Côte", category: "Rött vin", country: "Frankrike", region: "Rhône",
-    vintage: 2019, alcohol: 14.5, price: 480, description: "Kraftfull Rhône-blend med mörka bär, kryddor och lavendel."
-  },
-  {
-    name: "Riesling Kabinett", producer: "Dr. Loosen", category: "Vitt vin", country: "Tyskland", region: "Mosel",
-    vintage: 2022, alcohol: 8.5, price: 195, description: "Lätt och fruktig Riesling med äpple, citrus och mineralitet."
-  },
-  {
-    name: "Brunello di Montalcino", producer: "Biondi-Santi", category: "Rött vin", country: "Italien", region: "Toscana",
-    vintage: 2017, alcohol: 14.0, price: 1200, description: "Elegant Sangiovese med lång lagringspotential och komplex smak."
-  },
-  {
-    name: "Hermitage Rouge", producer: "E. Guigal", category: "Rött vin", country: "Frankrike", region: "Rhône",
-    vintage: 2018, alcohol: 13.5, price: 950, description: "Prestigefylld Syrah med svarta oliver, kryddor och rök."
-  },
-  {
-    name: "Mosel Spätlese", producer: "Egon Müller", category: "Vitt vin", country: "Tyskland", region: "Mosel",
-    vintage: 2021, alcohol: 7.5, price: 380, description: "Söt Riesling med persika, honung och livlig syra."
-  },
-  {
-    name: "Gevrey-Chambertin", producer: "Domaine Faiveley", category: "Rött vin", country: "Frankrike", region: "Bourgogne",
-    vintage: 2019, alcohol: 13.0, price: 720, description: "Elegant Pinot Noir med röda bär, jord och delikata kryddor."
-  }
-];
-
-function generateWineData(template: any, index: number) {
-  const priceVariation = 0.9 + Math.random() * 0.2; // ±10% price variation
-  const finalPrice = Math.round(template.price * priceVariation);
+// Helper function to generate investment metrics
+function generateInvestmentMetrics(product: SystembolagetProduct) {
+  const baseScore = Math.floor(Math.random() * 40) + 60; // 60-100
+  const price = product.PriceIncVat || 0;
   
-  // Generate investment score based on price
-  let investmentScore = 5;
-  if (finalPrice > 800) investmentScore = 7;
-  if (finalPrice > 1500) investmentScore = 8;
-  if (finalPrice > 2500) investmentScore = 9;
-  
-  const baseReturn = Math.max(2, (finalPrice / 400) * 1.8);
+  // Higher prices tend to have better investment potential
+  const priceBonus = price > 500 ? 10 : price > 200 ? 5 : 0;
+  const finalScore = Math.min(100, baseScore + priceBonus);
   
   return {
-    product_id: `SB_${Date.now()}_${index}`,
-    name: template.name,
-    producer: template.producer,
-    category: template.category,
-    country: template.country,
-    region: template.region,
-    vintage: template.vintage,
-    alcohol_percentage: template.alcohol,
-    price: finalPrice,
-    description: template.description,
-    image_url: undefined,
-    assortment: finalPrice > 1000 ? "Beställningssortiment" : "Ordinarie sortiment",
-    sales_start_date: undefined,
-    investment_score: investmentScore,
-    projected_return_1y: Math.round(baseReturn * 0.9 * 10) / 10,
-    projected_return_3y: Math.round(baseReturn * 2.4 * 10) / 10,
-    projected_return_5y: Math.round(baseReturn * 4.8 * 10) / 10,
-    projected_return_10y: Math.round(baseReturn * 13 * 10) / 10,
-    storage_time_months: Math.max(24, (2025 - template.vintage) * 12),
-    drinking_window_start: template.vintage + 2,
-    drinking_window_end: template.vintage + 18,
-    value_appreciation: Math.round((Math.random() * 12 + 4) * 10) / 10
+    investment_score: finalScore,
+    projected_return_1y: Math.random() * 15 + 2, // 2-17%
+    projected_return_3y: Math.random() * 25 + 5, // 5-30%
+    projected_return_5y: Math.random() * 40 + 10, // 10-50%
+    projected_return_10y: Math.random() * 80 + 20, // 20-100%
+    storage_time_months: Math.floor(Math.random() * 120) + 12, // 12-132 months
+    drinking_window_start: Math.floor(Math.random() * 10) + 1, // 1-10 years
+    drinking_window_end: Math.floor(Math.random() * 20) + 15, // 15-35 years
+    value_appreciation: Math.random() * 12 + 3, // 3-15% annually
   };
+}
+
+async function processProductChunk(
+  supabase: any,
+  products: SystembolagetProduct[],
+  syncId: string
+) {
+  console.log(`Processing chunk of ${products.length} products`);
+  
+  const wineData = products.map(product => {
+    const investmentMetrics = generateInvestmentMetrics(product);
+    
+    return {
+      product_id: product.ProductId,
+      name: product.ProductNameBold,
+      producer: product.ProducerName || null,
+      category: product.Category || null,
+      country: product.Country || null,
+      region: product.Region1 || null,
+      vintage: product.VintageYear || null,
+      alcohol_percentage: product.AlcoholPercentage || null,
+      price: product.PriceIncVat || 0,
+      description: product.BottleTextShort || null,
+      sales_start_date: product.ProductLaunchDate || null,
+      assortment: product.IsInStoreSearchAssortment ? 'Butik' : 'Beställning',
+      ...investmentMetrics
+    };
+  });
+
+  // Insert wines in smaller batches
+  const batchSize = 10;
+  let insertedCount = 0;
+  
+  for (let i = 0; i < wineData.length; i += batchSize) {
+    const batch = wineData.slice(i, i + batchSize);
+    
+    const { error } = await supabase
+      .from('wines')
+      .upsert(batch, { 
+        onConflict: 'product_id',
+        ignoreDuplicates: false 
+      });
+
+    if (error) {
+      console.error('Error inserting batch:', error);
+      throw error;
+    }
+    
+    insertedCount += batch.length;
+    
+    // Small delay to prevent overwhelming the database
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  // Update sync progress
+  const { data: currentSync } = await supabase
+    .from('sync_status')
+    .select('processed_products, wines_inserted')
+    .eq('id', syncId)
+    .single();
+
+  await supabase
+    .from('sync_status')
+    .update({
+      processed_products: (currentSync?.processed_products || 0) + products.length,
+      wines_inserted: (currentSync?.wines_inserted || 0) + insertedCount,
+      last_product_processed: products[products.length - 1]?.ProductId
+    })
+    .eq('id', syncId);
+
+  return insertedCount;
+}
+
+async function performFullSync(supabase: any, syncId: string) {
+  try {
+    console.log('Starting full Systembolaget sync...');
+    
+    // Fetch all products
+    const response = await fetch('https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search');
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const products = data.products || [];
+    
+    console.log(`Fetched ${products.length} total products`);
+    
+    // Update total count
+    await supabase
+      .from('sync_status')
+      .update({ total_products: products.length })
+      .eq('id', syncId);
+
+    // Process in chunks
+    const chunkSize = 50;
+    let totalInserted = 0;
+    
+    for (let i = 0; i < products.length; i += chunkSize) {
+      const chunk = products.slice(i, i + chunkSize);
+      
+      try {
+        const insertedCount = await processProductChunk(supabase, chunk, syncId);
+        totalInserted += insertedCount;
+        
+        console.log(`Processed chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(products.length/chunkSize)}`);
+        
+        // Delay between chunks to prevent memory issues
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (chunkError) {
+        console.error(`Error processing chunk starting at ${i}:`, chunkError);
+        
+        // Update sync status with error but continue
+        const errorMessage = chunkError instanceof Error ? chunkError.message : 'Unknown error';
+        await supabase
+          .from('sync_status')
+          .update({
+            error_message: `Error at chunk ${i}: ${errorMessage}`
+          })
+          .eq('id', syncId);
+      }
+    }
+
+    // Mark sync as completed
+    await supabase
+      .from('sync_status')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        wines_inserted: totalInserted
+      })
+      .eq('id', syncId);
+
+    console.log(`Full sync completed. Processed ${totalInserted} wines.`);
+    
+    return {
+      success: true,
+      message: 'Full sync completed successfully',
+      totalProducts: products.length,
+      winesInserted: totalInserted
+    };
+
+  } catch (error) {
+    console.error('Full sync failed:', error);
+    
+    // Mark sync as failed
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    await supabase
+      .from('sync_status')
+      .update({
+        status: 'failed',
+        error_message: errorMessage,
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', syncId);
+
+    throw error;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -114,89 +218,51 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    console.log('Generating realistic wine data...');
-
-    // Generate variations of each wine template
-    const wineRecords = [];
-    
-    for (let i = 0; i < wineTemplates.length; i++) {
-      const template = wineTemplates[i];
-      
-      // Create 2-3 variations of each wine (different vintages/prices)
-      for (let variation = 0; variation < 2; variation++) {
-        const vintageVariation = variation === 0 ? 0 : -1; // Current year and previous year
-        const modifiedTemplate = {
-          ...template,
-          vintage: template.vintage + vintageVariation,
-          price: template.price * (variation === 0 ? 1 : 0.85) // Older vintage slightly cheaper
-        };
-        
-        const wineRecord = generateWineData(modifiedTemplate, i * 10 + variation);
-        wineRecords.push(wineRecord);
-      }
-    }
-
-    console.log(`Generated ${wineRecords.length} wine records`);
-
-    // Insert in small batches
-    const batchSize = 10;
-    let insertedCount = 0;
-
-    for (let i = 0; i < wineRecords.length; i += batchSize) {
-      const batch = wineRecords.slice(i, i + batchSize);
-      
-      console.log(`Inserting batch ${Math.floor(i / batchSize) + 1}...`);
-      
-      const { error } = await supabaseClient
-        .from('wines')
-        .upsert(batch, { 
-          onConflict: 'product_id',
-          ignoreDuplicates: false 
-        });
-
-      if (error) {
-        console.error('Error inserting batch:', error);
-        throw error;
-      }
-
-      insertedCount += batch.length;
-      console.log(`Inserted ${batch.length} wines. Total: ${insertedCount}`);
-    }
-
-    console.log(`Successfully generated and inserted ${insertedCount} wines`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Successfully generated ${insertedCount} realistic wines based on Systembolaget data`,
-        totalProducts: wineRecords.length,
-        winesFound: wineRecords.length,
-        winesInserted: insertedCount,
-        note: "Generated from curated premium wine templates with realistic pricing and investment data"
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
     );
+
+    // Create a new sync record
+    const { data: syncRecord, error: syncError } = await supabase
+      .from('sync_status')
+      .insert({
+        sync_type: 'full_import',
+        status: 'running'
+      })
+      .select()
+      .single();
+
+    if (syncError || !syncRecord) {
+      throw new Error(`Failed to create sync record: ${syncError?.message}`);
+    }
+
+    console.log(`Created sync record: ${syncRecord.id}`);
+
+    // Start background sync process (don't await)
+    performFullSync(supabase, syncRecord.id)
+      .catch(error => {
+        console.error('Background sync failed:', error);
+      });
+
+    // Return immediate response
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Sync started in background',
+      syncId: syncRecord.id
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
-    console.error('Error generating wine data:', error);
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
+    console.error('Error starting sync:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({
+      success: false,
+      error: errorMessage
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
-})
+});
