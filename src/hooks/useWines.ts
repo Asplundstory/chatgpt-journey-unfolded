@@ -34,31 +34,39 @@ export const useWines = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchWines = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('wines')
-          .select('*')
-          .order('created_at', { ascending: false });
+  const fetchWines = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching wines from Supabase...');
+      const { data, error } = await supabase
+        .from('wines')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          throw error;
-        }
+      console.log('Supabase response:', { data, error });
 
-        setWines(data || []);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching wines:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
+      if (error) {
+        throw error;
       }
-    };
 
+      console.log('Setting wines:', data?.length || 0, 'wines found');
+      setWines(data || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching wines:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchWines();
   }, []);
 
-  return { wines, loading, error };
+  const refetch = () => {
+    fetchWines();
+  };
+
+  return { wines, loading, error, refetch };
 };

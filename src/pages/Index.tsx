@@ -9,7 +9,7 @@ import { WineFilters } from "@/components/WineFilters";
 import { useWines } from "@/hooks/useWines";
 
 const Index = () => {
-  const { wines: systembolagetWines, loading, error } = useWines();
+  const { wines: systembolagetWines, loading, error, refetch } = useWines();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     category: "",
@@ -271,6 +271,15 @@ const Index = () => {
               >
                 <TrendingUp className="h-4 w-4" />
                 Föreslå hetaste investeringar
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={refetch}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Uppdatera data
               </Button>
             </div>
           </div>
