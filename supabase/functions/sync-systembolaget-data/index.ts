@@ -198,93 +198,89 @@ function generateInvestmentMetrics(product: SystembolagetProduct, reviewData?: W
 async function processProductChunk(supabase: any, products: SystembolagetProduct[], syncId: string) {
   console.log(`Processing chunk of ${products.length} products...`);
   
-  // Filter for wine products only - GitHub data uses different field names
-  const wineProducts = products.filter(product => 
-    product.categoryLevel1?.toLowerCase().includes('vin') ||
-    product.categoryLevel2?.toLowerCase().includes('rött') ||
-    product.categoryLevel2?.toLowerCase().includes('vitt') ||
-    product.categoryLevel2?.toLowerCase().includes('rosé') ||
-    product.categoryLevel2?.toLowerCase().includes('mousserande')
-  );
+  // Filter for wine products only
+  const wineProducts = products.filter(product => {
+    const cat1 = product.categoryLevel1?.toLowerCase() || '';
+    const cat2 = product.categoryLevel2?.toLowerCase() || '';
+    const cat3 = product.categoryLevel3?.toLowerCase() || '';
+    
+    return cat1.includes('vin') || 
+           cat2.includes('rött') || cat2.includes('vitt') || 
+           cat2.includes('rosé') || cat2.includes('mousserande') ||
+           cat3.includes('rött') || cat3.includes('vitt') || 
+           cat3.includes('rosé') || cat3.includes('mousserande');
+  });
 
   console.log(`Found ${wineProducts.length} wine products in this chunk`);
 
   if (wineProducts.length === 0) {
-    console.log('No wine products found in this chunk, skipping...');
     return 0;
   }
 
-  // Transform products for database insertion - adapt to GitHub JSON structure
-  const transformedWines = wineProducts.map(product => {
-    const reviewMatch = matchWineWithReviews(product);
-    const metrics = generateInvestmentMetrics(product, reviewMatch);
+  // Process wines in smaller sub-batches to prevent memory buildup
+  let totalInserted = 0;
+  const subBatchSize = 25; // Smaller batches for memory efficiency
+  
+  for (let i = 0; i < wineProducts.length; i += subBatchSize) {
+    const subBatch = wineProducts.slice(i, i + subBatchSize);
     
-    // GitHub JSON uses different field names
-    let description = `${product.taste || product.color || ''} ${product.style || ''}`.trim() || null;
-    
-    // Enhance description with review data if available
-    if (reviewMatch?.description) {
-      description = reviewMatch.description;
-    }
-    
-    return {
-      product_id: product.productId,
-      name: product.productNameThin || product.productNameBold,
-      producer: product.producer || product.producerName,
-      category: product.categoryLevel2 || product.categoryLevel1,
-      country: product.country || product.originLevel1,
-      region: product.originLevel1 || product.region || product.originLevel2,
-      vintage: product.vintage,
-      alcohol_percentage: product.alcoholPercentage,
-      price: product.price || product.priceIncVat,
-      description: description,
-      sales_start_date: product.saleStartDate ? new Date(product.saleStartDate).toISOString().split('T')[0] : null,
-      assortment: product.assortmentText || product.assortment,
-      ...metrics
-    };
-  });
+    // Transform products for database insertion
+    const transformedWines = subBatch.map(product => {
+      const reviewMatch = matchWineWithReviews(product);
+      const metrics = generateInvestmentMetrics(product, reviewMatch);
+      
+      let description = `${product.taste || product.color || ''} ${product.style || ''}`.trim() || null;
+      
+      if (reviewMatch?.description) {
+        description = reviewMatch.description;
+      }
+      
+      return {
+        product_id: product.productId,
+        name: product.productNameThin || product.productNameBold,
+        producer: product.producer || product.producerName,
+        category: product.categoryLevel2 || product.categoryLevel1,
+        country: product.country || product.originLevel1,
+        region: product.originLevel1 || product.region || product.originLevel2,
+        vintage: product.vintage,
+        alcohol_percentage: product.alcoholPercentage,
+        price: product.price || product.priceIncVat,
+        description: description,
+        sales_start_date: product.saleStartDate ? new Date(product.saleStartDate).toISOString().split('T')[0] : null,
+        assortment: product.assortmentText || product.assortment,
+        ...metrics
+      };
+    });
 
-  // Insert wines in batches
-  const batchSize = 50;
-  let insertedCount = 0;
-
-  for (let i = 0; i < transformedWines.length; i += batchSize) {
-    const batch = transformedWines.slice(i, i + batchSize);
-    
     try {
       const { error } = await supabase
         .from('wines')
-        .upsert(batch, { onConflict: 'product_id' });
+        .upsert(transformedWines, { onConflict: 'product_id' });
 
       if (error) {
-        console.error('Error inserting wine batch:', error);
+        console.error('Error inserting wine sub-batch:', error);
         continue;
       }
 
-      insertedCount += batch.length;
-      console.log(`Inserted batch of ${batch.length} wines. Total: ${insertedCount}`);
+      totalInserted += transformedWines.length;
+      console.log(`Inserted sub-batch of ${transformedWines.length} wines. Running total: ${totalInserted}`);
+      
+      // Clear transformed data from memory
+      transformedWines.length = 0;
+      
     } catch (error) {
-      console.error('Error processing wine batch:', error);
+      console.error('Error processing wine sub-batch:', error);
     }
   }
 
-  // Update sync status
-  await supabase
-    .from('sync_status')
-    .update({
-      processed_products: insertedCount,
-      wines_inserted: insertedCount,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', syncId);
-
-  console.log(`Successfully processed ${insertedCount} wines from chunk`);
-  return insertedCount;
+  return totalInserted;
 }
 
-async function performFullSync(supabase: any, syncId: string) {
-  console.log('Starting comprehensive wine data sync from susbolaget.emrik.org...');
-  
+async function streamProcessProducts(supabase: any, syncId: string) {
+  console.log('Starting memory-efficient wine data sync...');
+  let totalWinesInserted = 0;
+  let processedCount = 0;
+
   try {
     // Update sync status to running
     await supabase
@@ -296,12 +292,9 @@ async function performFullSync(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    // Fetch products from C4illin's public API (susbolaget.emrik.org)
-    console.log('Fetching ALL products from C4illin public API...');
-    
-    // Try the main endpoint first
+    // Try the main endpoint first, then fallback
     let response;
-    let allProducts;
+    console.log('Fetching products with streaming approach...');
     
     try {
       response = await fetch('https://susbolaget.emrik.org/v1/products', {
@@ -314,27 +307,25 @@ async function performFullSync(supabase: any, syncId: string) {
       if (!response.ok) {
         throw new Error(`Primary API failed: ${response.status} ${response.statusText}`);
       }
-      
-      const data = await response.json();
-      allProducts = data.products || data; // Handle different response formats
-      
     } catch (primaryError) {
-      console.log('Primary API failed, trying GitHub raw data fallback...');
-      
-      // Fallback to GitHub raw data
+      console.log('Primary API failed, trying GitHub fallback...');
       response = await fetch('https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json');
       
       if (!response.ok) {
         throw new Error(`All APIs failed. GitHub fallback: ${response.status} ${response.statusText}`);
       }
-      
-      allProducts = await response.json();
     }
+
+    // Parse JSON response
+    const data = await response.json();
+    const allProducts = data.products || data;
     
-    console.log(`Fetched ${allProducts.length} total products from API`);
-    console.log('Sample product structure:', JSON.stringify(allProducts[0], null, 2));
-    
+    if (!Array.isArray(allProducts)) {
+      throw new Error('Invalid response format - expected array of products');
+    }
+
     const totalProductCount = allProducts.length;
+    console.log(`Found ${totalProductCount} total products`);
     
     // Update sync status with total count
     await supabase
@@ -345,36 +336,58 @@ async function performFullSync(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    // Process products in chunks
-    const chunkSize = 200;
-    let processedCount = 0;
-    let totalWinesInserted = 0;
+    // Process in smaller chunks to prevent memory issues
+    const chunkSize = 100; // Reduced chunk size
+    const chunks = Math.ceil(totalProductCount / chunkSize);
     
-    for (let i = 0; i < allProducts.length; i += chunkSize) {
+    for (let i = 0; i < totalProductCount; i += chunkSize) {
       const chunk = allProducts.slice(i, i + chunkSize);
-      console.log(`Processing chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(allProducts.length/chunkSize)}`);
+      const chunkNum = Math.floor(i / chunkSize) + 1;
       
-      const insertedCount = await processProductChunk(supabase, chunk, syncId);
-      totalWinesInserted += insertedCount;
+      console.log(`Processing chunk ${chunkNum}/${chunks} (${chunk.length} products)`);
       
-      processedCount += chunk.length;
-      
-      // Update progress
-      await supabase
-        .from('sync_status')
-        .update({
-          processed_products: processedCount,
-          wines_inserted: totalWinesInserted,
-          last_product_processed: `Chunk ${Math.floor(i/chunkSize) + 1}`,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', syncId);
-      
-      console.log(`Progress: ${processedCount}/${totalProductCount} products processed, ${totalWinesInserted} wines inserted`);
-      
-      // Small delay between chunks to prevent overwhelming the server
-      await new Promise(resolve => setTimeout(resolve, 200));
+      try {
+        const insertedCount = await processProductChunk(supabase, chunk, syncId);
+        totalWinesInserted += insertedCount;
+        processedCount += chunk.length;
+        
+        // Update progress
+        await supabase
+          .from('sync_status')
+          .update({
+            processed_products: processedCount,
+            wines_inserted: totalWinesInserted,
+            last_product_processed: `Chunk ${chunkNum}/${chunks}`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', syncId);
+          
+        console.log(`Progress: ${processedCount}/${totalProductCount} processed, ${totalWinesInserted} wines inserted`);
+        
+        // Clear chunk from memory and give runtime a break
+        if (chunkNum % 10 === 0) {
+          console.log('Memory cleanup break...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+      } catch (chunkError) {
+        console.error(`Error processing chunk ${chunkNum}:`, chunkError);
+        // Continue with next chunk instead of failing completely
+        continue;
+      }
     }
+
+    return { totalProductCount, totalWinesInserted, processedCount };
+    
+  } catch (error) {
+    console.error('Error in streamProcessProducts:', error);
+    throw error;
+  }
+}
+
+async function performFullSync(supabase: any, syncId: string) {
+  try {
+    const result = await streamProcessProducts(supabase, syncId);
 
     // Mark sync as completed
     await supabase
@@ -382,17 +395,18 @@ async function performFullSync(supabase: any, syncId: string) {
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        wines_inserted: totalWinesInserted,
+        wines_inserted: result.totalWinesInserted,
+        processed_products: result.processedCount,
         updated_at: new Date().toISOString()
       })
       .eq('id', syncId);
 
-    console.log('Comprehensive sync from susbolaget.emrik.org completed successfully!');
+    console.log('Memory-efficient sync completed successfully!');
     return {
       success: true,
-      message: 'Full sync from susbolaget.emrik.org with wine reviews integration completed successfully',
-      totalProducts: totalProductCount,
-      winesInserted: totalWinesInserted
+      message: 'Memory-efficient sync completed successfully',
+      totalProducts: result.totalProductCount,
+      winesInserted: result.totalWinesInserted
     };
 
   } catch (error) {
@@ -442,16 +456,15 @@ Deno.serve(async (req) => {
 
     console.log(`Created sync record: ${syncRecord.id}`);
 
-    // Start background sync process (don't await)
-    performFullSync(supabase, syncRecord.id)
-      .catch(error => {
-        console.error('Background sync failed:', error);
-      });
+    // Start background sync process with better memory management
+    performFullSync(supabase, syncRecord.id).catch(error => {
+      console.error('Background sync failed:', error);
+    });
 
     // Return immediate response
     return new Response(JSON.stringify({
       success: true,
-      message: 'Sync started in background',
+      message: 'Memory-efficient sync started in background',
       syncId: syncRecord.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
