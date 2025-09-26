@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WineList } from "@/components/WineList";
 import { WineFilters } from "@/components/WineFilters";
+import { WineRecommendations } from "@/components/WineRecommendations";
 import { useWines } from "@/hooks/useWines";
 import { SystembolagetSyncButton } from "@/components/SystembolagetSyncButton";
 
@@ -114,7 +115,15 @@ const Index = () => {
 
     // If suggestions mode is active, show top investment opportunities
     if (showSuggestions) {
-      return [...systembolagetWines]
+      const winesWithInvestmentData = systembolagetWines.filter(wine => 
+        wine.investment_score && wine.projected_return_5y
+      );
+      
+      if (winesWithInvestmentData.length === 0) {
+        return [];
+      }
+      
+      return [...winesWithInvestmentData]
         .sort((a, b) => {
           // Sort by investment score first, then by 5-year projected returns
           const scoreA = (a.investment_score || 0) * 10 + (a.projected_return_5y || 0);
@@ -198,6 +207,17 @@ const Index = () => {
   };
 
   const showHotInvestments = () => {
+    // Check if we have wines with investment data
+    const winesWithInvestmentData = systembolagetWines.filter(wine => 
+      wine.investment_score && wine.projected_return_5y
+    );
+    
+    if (winesWithInvestmentData.length === 0) {
+      // Show a toast or alert that no investment data is available
+      alert('Inga viner med investeringsdata tillgängliga. Kör synkronisering för att hämta data.');
+      return;
+    }
+    
     setShowSuggestions(true);
   };
 
@@ -269,9 +289,15 @@ const Index = () => {
                 variant="secondary" 
                 onClick={showHotInvestments}
                 className="flex items-center gap-2"
+                disabled={systembolagetWines.filter(w => w.investment_score && w.projected_return_5y).length === 0}
               >
                 <TrendingUp className="h-4 w-4" />
-                Föreslå hetaste investeringar
+                {systembolagetWines.length === 0 
+                  ? 'Inga viner laddade' 
+                  : systembolagetWines.filter(w => w.investment_score && w.projected_return_5y).length === 0
+                  ? 'Investeringsdata saknas'
+                  : 'Föreslå hetaste investeringar'
+                }
               </Button>
               
               <Button 
@@ -293,7 +319,7 @@ const Index = () => {
               {loading ? (
                 <>Laddar vindata från Systembolaget...</>
               ) : showSuggestions ? (
-                <>Hottest investeringar just nu (Topp 10)</>
+                <>🔥 Hetaste investeringarna just nu</>
               ) : (
                 <>Visar {filteredWines.length} viner</>
               )}
@@ -301,6 +327,9 @@ const Index = () => {
             {showSuggestions && (
               <p className="text-sm text-muted-foreground mt-1">
                 Sorterat efter investeringsbetyg och 5-års prognostiserad avkastning
+                {filteredWines.length === 0 && 
+                  " - Inga viner med investeringsdata tillgängliga än. Kör synkronisering först."
+                }
               </p>
             )}
             {error && (
@@ -310,8 +339,13 @@ const Index = () => {
             )}
           </div>
 
-          {/* Wine List */}
-          {loading ? (
+          {/* Wine Results or Recommendations */}
+          {showSuggestions ? (
+            <WineRecommendations 
+              wines={filteredWines} 
+              isVisible={showSuggestions} 
+            />
+          ) : loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
