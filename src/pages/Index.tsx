@@ -15,7 +15,11 @@ const Index = () => {
     priceRange: [0, 1000],
     alcoholContent: [0, 20],
     country: "",
-    vintage: ""
+    vintage: "",
+    drinkingWindowStart: "",
+    drinkingWindowEnd: "",
+    storageTimeRange: [0, 30],
+    investmentScore: [0, 10]
   });
 
   // Mock wine data - will be replaced with Systembolaget API data
@@ -31,7 +35,11 @@ const Index = () => {
       region: "Bordeaux",
       vintage: 2015,
       description: "Ett exceptionellt rött vin från Bordeaux med komplex smak av svarta bär och kryddor.",
-      image: "/placeholder.svg"
+      image: "/placeholder.svg",
+      drinkingWindow: { start: 2025, end: 2045 },
+      storageTime: 25,
+      investmentScore: 9,
+      valueAppreciation: 12.5
     },
     {
       id: 2,
@@ -44,7 +52,11 @@ const Index = () => {
       region: "Loire",
       vintage: 2022,
       description: "Elegant Sauvignon Blanc med mineraler och citrusnoter.",
-      image: "/placeholder.svg"
+      image: "/placeholder.svg",
+      drinkingWindow: { start: 2024, end: 2028 },
+      storageTime: 6,
+      investmentScore: 6,
+      valueAppreciation: 3.2
     },
     {
       id: 3,
@@ -57,7 +69,11 @@ const Index = () => {
       region: "Piemonte",
       vintage: 2018,
       description: "Kraftfullt rött vin med toner av körsbär, rosor och tryffel.",
-      image: "/placeholder.svg"
+      image: "/placeholder.svg",
+      drinkingWindow: { start: 2026, end: 2038 },
+      storageTime: 15,
+      investmentScore: 8,
+      valueAppreciation: 8.7
     }
   ];
 

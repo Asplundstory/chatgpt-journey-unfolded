@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Percent } from "lucide-react";
+import { MapPin, Calendar, Percent, Clock, TrendingUp } from "lucide-react";
 
 interface Wine {
   id: number;
@@ -14,6 +14,13 @@ interface Wine {
   vintage: number;
   description: string;
   image: string;
+  drinkingWindow: {
+    start: number;
+    end: number;
+  };
+  storageTime: number; // years
+  investmentScore?: number; // 1-10 scale from Wine-Searcher analysis
+  valueAppreciation?: number; // percentage
 }
 
 interface WineCardProps {
@@ -38,7 +45,7 @@ export const WineCard = ({ wine }: WineCardProps) => {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="space-y-3">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
@@ -53,6 +60,21 @@ export const WineCard = ({ wine }: WineCardProps) => {
               <span>{wine.alcoholContent}%</span>
             </div>
           </div>
+          
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>Drick: {wine.drinkingWindow.start}-{wine.drinkingWindow.end}</span>
+            </div>
+            {wine.investmentScore && (
+              <div className="flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                <span className="text-primary font-medium">
+                  Investering: {wine.investmentScore}/10
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         <p className="text-sm text-muted-foreground line-clamp-2">
@@ -60,12 +82,24 @@ export const WineCard = ({ wine }: WineCardProps) => {
         </p>
 
         <div className="flex items-center justify-between pt-2">
-          <div className="text-xl font-bold text-primary">
-            {wine.price} kr
+          <div className="space-y-1">
+            <div className="text-xl font-bold text-primary">
+              {wine.price} kr
+            </div>
+            {wine.valueAppreciation && (
+              <div className="text-xs text-green-600 font-medium">
+                +{wine.valueAppreciation}% värdeökning
+              </div>
+            )}
           </div>
-          <Badge variant="outline" className="text-xs">
-            {wine.region}
-          </Badge>
+          <div className="text-right space-y-1">
+            <Badge variant="outline" className="text-xs">
+              {wine.region}
+            </Badge>
+            <div className="text-xs text-muted-foreground">
+              Lagra: {wine.storageTime} år
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

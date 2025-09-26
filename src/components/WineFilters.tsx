@@ -11,6 +11,10 @@ interface Filters {
   alcoholContent: number[];
   country: string;
   vintage: string;
+  drinkingWindowStart: string;
+  drinkingWindowEnd: string;
+  storageTimeRange: number[];
+  investmentScore: number[];
 }
 
 interface WineFiltersProps {
@@ -32,7 +36,11 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
       priceRange: [0, 1000],
       alcoholContent: [0, 20],
       country: "",
-      vintage: ""
+      vintage: "",
+      drinkingWindowStart: "",
+      drinkingWindowEnd: "",
+      storageTimeRange: [0, 30],
+      investmentScore: [0, 10]
     });
   };
 
@@ -52,7 +60,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
       </CardHeader>
       
       <CardContent className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           {/* Category Filter */}
           <div className="space-y-2">
             <Label htmlFor="category">Kategori</Label>
@@ -121,6 +129,50 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Drinking Window Start */}
+          <div className="space-y-2">
+            <Label htmlFor="drinkingStart">Drick från år</Label>
+            <Select
+              value={filters.drinkingWindowStart}
+              onValueChange={(value) => updateFilter("drinkingWindowStart", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Välj startår" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="">Alla</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2027">2027</SelectItem>
+                <SelectItem value="2028">2028</SelectItem>
+                <SelectItem value="2030">2030+</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Drinking Window End */}
+          <div className="space-y-2">
+            <Label htmlFor="drinkingEnd">Drick till år</Label>
+            <Select
+              value={filters.drinkingWindowEnd}
+              onValueChange={(value) => updateFilter("drinkingWindowEnd", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Välj slutår" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="">Alla</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2030">2030</SelectItem>
+                <SelectItem value="2035">2035</SelectItem>
+                <SelectItem value="2040">2040</SelectItem>
+                <SelectItem value="2045">2045</SelectItem>
+                <SelectItem value="2050">2050+</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Price Range Slider */}
@@ -136,15 +188,28 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
           />
         </div>
 
-        {/* Alcohol Content Slider */}
+        {/* Storage Time Slider */}
         <div className="space-y-3">
-          <Label>Alkoholhalt: {filters.alcoholContent[0]}% - {filters.alcoholContent[1]}%</Label>
+          <Label>Lagringstid: {filters.storageTimeRange[0]} - {filters.storageTimeRange[1]} år</Label>
           <Slider
-            value={filters.alcoholContent}
-            onValueChange={(value) => updateFilter("alcoholContent", value)}
-            max={20}
+            value={filters.storageTimeRange}
+            onValueChange={(value) => updateFilter("storageTimeRange", value)}
+            max={30}
             min={0}
-            step={0.5}
+            step={1}
+            className="w-full"
+          />
+        </div>
+
+        {/* Investment Score Slider */}
+        <div className="space-y-3">
+          <Label>Investeringsbetyg: {filters.investmentScore[0]} - {filters.investmentScore[1]}/10</Label>
+          <Slider
+            value={filters.investmentScore}
+            onValueChange={(value) => updateFilter("investmentScore", value)}
+            max={10}
+            min={0}
+            step={1}
             className="w-full"
           />
         </div>
