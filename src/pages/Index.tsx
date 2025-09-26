@@ -1,15 +1,13 @@
-import { useState } from "react";
-import { Search, Filter, Wine } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, Wine } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { WineCard } from "@/components/WineCard";
+import { WineList } from "@/components/WineList";
 import { WineFilters } from "@/components/WineFilters";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     category: "",
     priceRange: [0, 1000],
@@ -94,6 +92,54 @@ const Index = () => {
     }
   ];
 
+  // Filtered wines based on search and filters
+  const filteredWines = useMemo(() => {
+    return mockWines.filter(wine => {
+      // Search filter
+      const matchesSearch = !searchQuery || 
+        wine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        wine.producer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        wine.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        wine.region.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Category filter
+      const matchesCategory = !filters.category || 
+        wine.category.toLowerCase() === filters.category.toLowerCase();
+
+      // Price filter
+      const matchesPrice = wine.price >= filters.priceRange[0] && 
+        wine.price <= filters.priceRange[1];
+
+      // Country filter
+      const matchesCountry = !filters.country || 
+        wine.country.toLowerCase() === filters.country.toLowerCase();
+
+      // Vintage filter
+      const matchesVintage = !filters.vintage || 
+        wine.vintage.toString() === filters.vintage;
+
+      // Drinking window filters
+      const matchesDrinkingStart = !filters.drinkingWindowStart || 
+        wine.drinkingWindow.start >= parseInt(filters.drinkingWindowStart);
+      
+      const matchesDrinkingEnd = !filters.drinkingWindowEnd || 
+        wine.drinkingWindow.end <= parseInt(filters.drinkingWindowEnd.replace('+', ''));
+
+      // Storage time filter
+      const matchesStorageTime = wine.storageTime >= filters.storageTimeRange[0] && 
+        wine.storageTime <= filters.storageTimeRange[1];
+
+      // Investment score filter
+      const matchesInvestmentScore = !wine.investmentScore || 
+        (wine.investmentScore >= filters.investmentScore[0] && 
+         wine.investmentScore <= filters.investmentScore[1]);
+
+      return matchesSearch && matchesCategory && matchesPrice && 
+             matchesCountry && matchesVintage && matchesDrinkingStart && 
+             matchesDrinkingEnd && matchesStorageTime && matchesInvestmentScore;
+    });
+  }, [searchQuery, filters, mockWines]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -113,45 +159,29 @@ const Index = () => {
 
       {/* Search and Filters */}
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 space-y-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Sök efter vin, producent, land..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              Filter
-            </Button>
+        <div className="mb-8 space-y-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Sök efter vin, producent, land..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
 
-          {showFilters && (
-            <WineFilters filters={filters} onFiltersChange={setFilters} />
-          )}
+          <WineFilters filters={filters} onFiltersChange={setFilters} />
         </div>
 
         {/* Results */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-foreground">
-            Visar {mockWines.length} viner
+            Visar {filteredWines.length} viner
           </h2>
         </div>
 
-        {/* Wine Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {mockWines.map((wine) => (
-            <WineCard key={wine.id} wine={wine} />
-          ))}
-        </div>
+        {/* Wine List */}
+        <WineList wines={filteredWines} />
       </div>
     </div>
   );
