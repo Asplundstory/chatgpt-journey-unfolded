@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
+import { useUserRoles } from '@/hooks/useUserRoles';
 import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 export const SyncProgressCard = () => {
@@ -13,6 +14,13 @@ export const SyncProgressCard = () => {
     isCompleted, 
     isFailed 
   } = useSyncStatus();
+  
+  const { isAdmin, loading: rolesLoading } = useUserRoles();
+
+  // Only show to admins
+  if (rolesLoading || !isAdmin()) {
+    return null;
+  }
 
   if (loading) {
     return (

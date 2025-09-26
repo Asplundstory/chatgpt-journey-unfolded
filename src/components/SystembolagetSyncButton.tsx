@@ -5,11 +5,22 @@ import { useSystembolagetSync } from "@/hooks/useSystembolagetSync";
 import { useToast } from "@/components/ui/use-toast";
 import { SyncProgressCard } from "./SyncProgressCard";
 import { useSyncStatus } from "@/hooks/useSyncStatus";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 export const SystembolagetSyncButton = () => {
   const { syncData, syncing } = useSystembolagetSync();
   const { toast } = useToast();
   const { isRunning } = useSyncStatus();
+  const { isAdmin, loading: rolesLoading } = useUserRoles();
+
+  // Don't show the button if user is not an admin
+  if (rolesLoading) {
+    return null; // or a loading spinner
+  }
+
+  if (!isAdmin()) {
+    return null; // Only admins can see the sync button
+  }
 
   const handleSync = async () => {
     const syncResult = await syncData();
