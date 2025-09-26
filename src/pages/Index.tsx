@@ -14,7 +14,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     category: "",
-    priceRange: [0, 1000],
+    priceRange: [0, 5000],
     country: "",
     vintage: "",
     drinkingWindowStart: "",
@@ -24,7 +24,7 @@ const Index = () => {
   });
   const [appliedFilters, setAppliedFilters] = useState({
     category: "",
-    priceRange: [0, 1000],
+    priceRange: [0, 5000],
     country: "",
     vintage: "",
     drinkingWindowStart: "",
@@ -182,7 +182,7 @@ const Index = () => {
   const clearFilters = () => {
     const defaultFilters = {
       category: "",
-      priceRange: [0, 1000],
+      priceRange: [0, 5000],
       country: "",
       vintage: "",
       drinkingWindowStart: "",
