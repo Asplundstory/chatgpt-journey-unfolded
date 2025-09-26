@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WineList } from "@/components/WineList";
 import { WineFilters } from "@/components/WineFilters";
+import { useSystembolagetData } from "@/hooks/useSystembolagetData";
 
 const Index = () => {
+  const { wines: systembolagetWines, loading, error } = useSystembolagetData();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     category: "",
@@ -107,18 +109,18 @@ const Index = () => {
 
   // Filtered wines based on applied search and filters
   const filteredWines = useMemo(() => {
-    let wines = mockWines;
+    let wines = systembolagetWines;
 
     // If suggestions mode is active, show top investment opportunities
     if (showSuggestions) {
-      return [...mockWines]
+      return [...systembolagetWines]
         .sort((a, b) => {
           // Sort by investment score first, then by 5-year projected returns
           const scoreA = (a.investmentScore || 0) * 10 + a.projectedReturns.fiveYears;
           const scoreB = (b.investmentScore || 0) * 10 + b.projectedReturns.fiveYears;
           return scoreB - scoreA;
         })
-        .slice(0, 5); // Show top 5 suggestions
+        .slice(0, 10); // Show top 10 suggestions
     }
 
     return wines.filter(wine => {
@@ -131,7 +133,7 @@ const Index = () => {
 
       // Category filter
       const matchesCategory = !appliedFilters.category || 
-        wine.category.toLowerCase() === appliedFilters.category.toLowerCase();
+        wine.category.toLowerCase().includes(appliedFilters.category.toLowerCase());
 
       // Price filter
       const matchesPrice = wine.price >= appliedFilters.priceRange[0] && 
@@ -139,7 +141,7 @@ const Index = () => {
 
       // Country filter
       const matchesCountry = !appliedFilters.country || 
-        wine.country.toLowerCase() === appliedFilters.country.toLowerCase();
+        wine.country.toLowerCase().includes(appliedFilters.country.toLowerCase());
 
       // Vintage filter
       const matchesVintage = !appliedFilters.vintage || 
@@ -165,7 +167,7 @@ const Index = () => {
              matchesCountry && matchesVintage && matchesDrinkingStart && 
              matchesDrinkingEnd && matchesStorageTime && matchesInvestmentScore;
     });
-  }, [appliedSearchQuery, appliedFilters, mockWines, showSuggestions]);
+  }, [appliedSearchQuery, appliedFilters, systembolagetWines, showSuggestions]);
 
   const applyFilters = () => {
     setAppliedFilters({ ...filters });
@@ -205,9 +207,21 @@ const Index = () => {
               <Wine className="h-8 w-8 text-primary" />
               <h1 className="text-3xl font-bold text-foreground">The Story – Vinguide</h1>
             </div>
-            <Badge variant="secondary" className="text-sm">
-              Systembolaget Data
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-sm">
+                Systembolaget Data
+              </Badge>
+              {loading && (
+                <Badge variant="outline" className="text-sm">
+                  Laddar...
+                </Badge>
+              )}
+              {error && (
+                <Badge variant="destructive" className="text-sm">
+                  Fallback data
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -260,8 +274,10 @@ const Index = () => {
         {/* Results */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-foreground">
-            {showSuggestions ? (
-              <>Hottest investeringar just nu (Topp 5)</>
+            {loading ? (
+              <>Laddar vindata från Systembolaget...</>
+            ) : showSuggestions ? (
+              <>Hottest investeringar just nu (Topp 10)</>
             ) : (
               <>Visar {filteredWines.length} viner</>
             )}
@@ -271,10 +287,24 @@ const Index = () => {
               Sorterat efter investeringsbetyg och 5-års prognostiserad avkastning
             </p>
           )}
+          {error && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Kunde ej ladda från Systembolaget API - använder fallback-data
+            </p>
+          )}
         </div>
 
         {/* Wine List */}
-        <WineList wines={filteredWines} />
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Hämtar vindata...</p>
+            </div>
+          </div>
+        ) : (
+          <WineList wines={filteredWines} />
+        )}
       </div>
     </div>
   );
