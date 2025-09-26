@@ -2,32 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Calendar, TrendingUp, Clock, BarChart3 } from "lucide-react";
 
-interface Wine {
-  id: number;
-  name: string;
-  producer: string;
-  category: string;
-  price: number;
-  alcoholContent: number;
-  country: string;
-  region: string;
-  vintage: number;
-  description: string;
-  image: string;
-  drinkingWindow: {
-    start: number;
-    end: number;
-  };
-  storageTime: number; // years
-  investmentScore?: number; // 1-10 scale from Wine-Searcher analysis
-  valueAppreciation?: number; // percentage
-  projectedReturns: {
-    oneYear: number;
-    threeYears: number;
-    fiveYears: number;
-    tenYears: number;
-  };
-}
+import { Wine } from "@/hooks/useWines";
 
 interface WineCardProps {
   wine: Wine;
@@ -61,51 +36,51 @@ export const WineCard = ({ wine }: WineCardProps) => {
               <Calendar className="h-3 w-3" />
               <span>{wine.vintage}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <BarChart3 className="h-3 w-3" />
-              <span>{wine.alcoholContent}%</span>
-            </div>
+              <div className="flex items-center gap-1">
+                <BarChart3 className="h-3 w-3" />
+                <span>{wine.alcohol_percentage}%</span>
+              </div>
           </div>
           
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>Drick: {wine.drinkingWindow.start}-{wine.drinkingWindow.end}</span>
-            </div>
-            {wine.investmentScore && (
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
-                <TrendingUp className="h-3 w-3" />
-                <span className="text-primary font-medium">
-                  Investering: {wine.investmentScore}/10
-                </span>
+                <Clock className="h-3 w-3" />
+                <span>Drick: {wine.drinking_window_start || 'N/A'}-{wine.drinking_window_end || 'N/A'}</span>
               </div>
-            )}
-          </div>
+              {wine.investment_score && (
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  <span className="text-primary font-medium">
+                    Investering: {wine.investment_score}/10
+                  </span>
+                </div>
+              )}
+            </div>
 
           {/* Projected Returns */}
           <div className="grid grid-cols-4 gap-2 p-2 bg-accent/20 rounded-md">
             <div className="text-center">
               <div className="text-xs text-muted-foreground">1år</div>
               <div className="text-sm font-semibold text-primary">
-                {wine.projectedReturns.oneYear > 0 ? '+' : ''}{wine.projectedReturns.oneYear}%
+                {wine.projected_return_1y && wine.projected_return_1y > 0 ? '+' : ''}{wine.projected_return_1y?.toFixed(1) || '0.0'}%
               </div>
             </div>
             <div className="text-center">
               <div className="text-xs text-muted-foreground">3år</div>
               <div className="text-sm font-semibold text-primary">
-                {wine.projectedReturns.threeYears > 0 ? '+' : ''}{wine.projectedReturns.threeYears}%
+                {wine.projected_return_3y && wine.projected_return_3y > 0 ? '+' : ''}{wine.projected_return_3y?.toFixed(1) || '0.0'}%
               </div>
             </div>
             <div className="text-center">
               <div className="text-xs text-muted-foreground">5år</div>
               <div className="text-sm font-semibold text-primary">
-                {wine.projectedReturns.fiveYears > 0 ? '+' : ''}{wine.projectedReturns.fiveYears}%
+                {wine.projected_return_5y && wine.projected_return_5y > 0 ? '+' : ''}{wine.projected_return_5y?.toFixed(1) || '0.0'}%
               </div>
             </div>
             <div className="text-center">
               <div className="text-xs text-muted-foreground">10år</div>
               <div className="text-sm font-semibold text-primary">
-                {wine.projectedReturns.tenYears > 0 ? '+' : ''}{wine.projectedReturns.tenYears}%
+                {wine.projected_return_10y && wine.projected_return_10y > 0 ? '+' : ''}{wine.projected_return_10y?.toFixed(1) || '0.0'}%
               </div>
             </div>
           </div>
@@ -120,9 +95,9 @@ export const WineCard = ({ wine }: WineCardProps) => {
             <div className="text-xl font-bold text-primary">
               {wine.price} kr
             </div>
-            {wine.valueAppreciation && (
+            {wine.value_appreciation && (
               <div className="text-xs text-green-600 font-medium">
-                +{wine.valueAppreciation}% värdeökning
+                +{wine.value_appreciation}% värdeökning
               </div>
             )}
           </div>
@@ -131,7 +106,7 @@ export const WineCard = ({ wine }: WineCardProps) => {
               {wine.region}
             </Badge>
             <div className="text-xs text-muted-foreground">
-              Lagra: {wine.storageTime} år
+              Lagra: {wine.storage_time_months ? Math.round(wine.storage_time_months / 12) : 0} år
             </div>
           </div>
         </div>

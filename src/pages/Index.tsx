@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WineList } from "@/components/WineList";
 import { WineFilters } from "@/components/WineFilters";
-import { useSystembolagetData } from "@/hooks/useSystembolagetData";
+import { useWines } from "@/hooks/useWines";
 
 const Index = () => {
-  const { wines: systembolagetWines, loading, error } = useSystembolagetData();
+  const { wines: systembolagetWines, loading, error } = useWines();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     category: "",
@@ -116,8 +116,8 @@ const Index = () => {
       return [...systembolagetWines]
         .sort((a, b) => {
           // Sort by investment score first, then by 5-year projected returns
-          const scoreA = (a.investmentScore || 0) * 10 + a.projectedReturns.fiveYears;
-          const scoreB = (b.investmentScore || 0) * 10 + b.projectedReturns.fiveYears;
+          const scoreA = (a.investment_score || 0) * 10 + (a.projected_return_5y || 0);
+          const scoreB = (b.investment_score || 0) * 10 + (b.projected_return_5y || 0);
           return scoreB - scoreA;
         })
         .slice(0, 10); // Show top 10 suggestions
@@ -126,14 +126,14 @@ const Index = () => {
     return wines.filter(wine => {
       // Search filter
       const matchesSearch = !appliedSearchQuery || 
-        wine.name.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
-        wine.producer.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
-        wine.country.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
-        wine.region.toLowerCase().includes(appliedSearchQuery.toLowerCase());
+        wine.name?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
+        wine.producer?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
+        wine.country?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
+        wine.region?.toLowerCase().includes(appliedSearchQuery.toLowerCase());
 
       // Category filter
       const matchesCategory = !appliedFilters.category || 
-        wine.category.toLowerCase().includes(appliedFilters.category.toLowerCase());
+        wine.category?.toLowerCase().includes(appliedFilters.category.toLowerCase());
 
       // Price filter
       const matchesPrice = wine.price >= appliedFilters.priceRange[0] && 
@@ -141,27 +141,30 @@ const Index = () => {
 
       // Country filter
       const matchesCountry = !appliedFilters.country || 
-        wine.country.toLowerCase().includes(appliedFilters.country.toLowerCase());
+        wine.country?.toLowerCase().includes(appliedFilters.country.toLowerCase());
 
       // Vintage filter
       const matchesVintage = !appliedFilters.vintage || 
-        wine.vintage.toString() === appliedFilters.vintage;
+        wine.vintage?.toString() === appliedFilters.vintage;
 
       // Drinking window filters
       const matchesDrinkingStart = !appliedFilters.drinkingWindowStart || 
-        wine.drinkingWindow.start >= parseInt(appliedFilters.drinkingWindowStart);
+        !wine.drinking_window_start ||
+        wine.drinking_window_start >= parseInt(appliedFilters.drinkingWindowStart);
       
       const matchesDrinkingEnd = !appliedFilters.drinkingWindowEnd || 
-        wine.drinkingWindow.end <= parseInt(appliedFilters.drinkingWindowEnd.replace('+', ''));
+        !wine.drinking_window_end ||
+        wine.drinking_window_end <= parseInt(appliedFilters.drinkingWindowEnd.replace('+', ''));
 
-      // Storage time filter
-      const matchesStorageTime = wine.storageTime >= appliedFilters.storageTimeRange[0] && 
-        wine.storageTime <= appliedFilters.storageTimeRange[1];
+      // Storage time filter (converted from months to years for display)
+      const storageTimeYears = wine.storage_time_months ? wine.storage_time_months / 12 : 0;
+      const matchesStorageTime = storageTimeYears >= appliedFilters.storageTimeRange[0] && 
+        storageTimeYears <= appliedFilters.storageTimeRange[1];
 
       // Investment score filter
-      const matchesInvestmentScore = !wine.investmentScore || 
-        (wine.investmentScore >= appliedFilters.investmentScore[0] && 
-         wine.investmentScore <= appliedFilters.investmentScore[1]);
+      const matchesInvestmentScore = !wine.investment_score || 
+        (wine.investment_score >= appliedFilters.investmentScore[0] && 
+         wine.investment_score <= appliedFilters.investmentScore[1]);
 
       return matchesSearch && matchesCategory && matchesPrice && 
              matchesCountry && matchesVintage && matchesDrinkingStart && 
