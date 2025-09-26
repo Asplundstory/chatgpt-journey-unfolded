@@ -127,7 +127,7 @@ async function performFullSync(supabase: any, syncId: string) {
     console.log('Starting full Systembolaget sync...');
     
     // Fetch all products
-    const response = await fetch('https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search');
+    const response = await fetch('https://susbolaget.emrik.org/v1/products');
     
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
