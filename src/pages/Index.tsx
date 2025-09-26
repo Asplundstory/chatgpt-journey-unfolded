@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { WineList } from "@/components/WineList";
 import { WineFilters } from "@/components/WineFilters";
 import { useWines } from "@/hooks/useWines";
+import { SystembolagetSyncButton } from "@/components/SystembolagetSyncButton";
 
 const Index = () => {
   const { wines: systembolagetWines, loading, error, refetch } = useWines();
@@ -281,6 +282,8 @@ const Index = () => {
                 <RotateCcw className="h-4 w-4" />
                 Uppdatera data
               </Button>
+              
+              <SystembolagetSyncButton />
             </div>
           </div>
 

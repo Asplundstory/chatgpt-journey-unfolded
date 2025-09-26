@@ -1,1 +1,4 @@
 project_id = "inwsvuynfkxhswtzgggq"
+
+[functions.sync-systembolaget-data]
+verify_jwt = false
