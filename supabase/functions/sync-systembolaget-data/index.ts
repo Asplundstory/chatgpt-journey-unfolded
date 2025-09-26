@@ -279,7 +279,7 @@ async function processProductChunk(supabase: any, products: SystembolagetProduct
 }
 
 async function performFullSync(supabase: any, syncId: string) {
-  console.log('Generating comprehensive sample wine dataset with review integration...');
+  console.log('Starting comprehensive wine data sync from susbolaget.emrik.org...');
   
   try {
     // Update sync status to running
@@ -292,126 +292,20 @@ async function performFullSync(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    // Since API access is restricted, we'll generate a comprehensive dataset
-    // based on real wine data patterns and our review samples
-    console.log('Generating comprehensive wine dataset...');
+    // Fetch products from susbolaget.emrik.org API
+    console.log('Fetching ALL products from susbolaget.emrik.org...');
+    const response = await fetch('https://susbolaget.emrik.org/v1/products');
     
-    const wineTemplates = [
-      // French wines
-      { base: "Bordeaux", regions: ["Pauillac", "Saint-Émilion", "Margaux", "Saint-Julien"], country: "Frankrike", varieties: ["Cabernet Sauvignon", "Merlot", "Cabernet Franc"], priceRange: [300, 2500] },
-      { base: "Burgundy", regions: ["Gevrey-Chambertin", "Chassagne-Montrachet", "Meursault"], country: "Frankrike", varieties: ["Pinot Noir", "Chardonnay"], priceRange: [400, 3000] },
-      { base: "Champagne", regions: ["Reims", "Épernay", "Aÿ"], country: "Frankrike", varieties: ["Champagne Blend"], priceRange: [500, 4000] },
-      { base: "Rhône", regions: ["Châteauneuf-du-Pape", "Hermitage", "Côte-Rôtie"], country: "Frankrike", varieties: ["Syrah", "Grenache"], priceRange: [250, 1800] },
-      
-      // Italian wines  
-      { base: "Barolo", regions: ["Cannubi", "Brunate", "La Morra"], country: "Italien", varieties: ["Nebbiolo"], priceRange: [400, 2200] },
-      { base: "Brunello", regions: ["Montalcino", "Sangiovese Grosso"], country: "Italien", varieties: ["Sangiovese"], priceRange: [500, 2800] },
-      { base: "Chianti Classico", regions: ["Gaiole", "Greve", "Radda"], country: "Italien", varieties: ["Sangiovese"], priceRange: [180, 800] },
-      { base: "Amarone", regions: ["Valpolicella", "Veneto"], country: "Italien", varieties: ["Corvina", "Rondinella"], priceRange: [350, 1500] },
-      
-      // Spanish wines
-      { base: "Rioja", regions: ["Rioja Alta", "Rioja Alavesa", "Rioja Baja"], country: "Spanien", varieties: ["Tempranillo"], priceRange: [150, 1200] },
-      { base: "Ribera del Duero", regions: ["Pesquera", "Valbuena"], country: "Spanien", varieties: ["Tempranillo"], priceRange: [200, 1800] },
-      
-      // German wines
-      { base: "Riesling", regions: ["Mosel", "Rheingau", "Pfalz"], country: "Tyskland", varieties: ["Riesling"], priceRange: [120, 800] },
-      
-      // US wines
-      { base: "Napa Valley", regions: ["Oakville", "Rutherford", "Stags Leap"], country: "USA", varieties: ["Cabernet Sauvignon"], priceRange: [300, 3500] },
-      { base: "Sonoma", regions: ["Russian River", "Dry Creek"], country: "USA", varieties: ["Pinot Noir", "Chardonnay"], priceRange: [250, 1500] },
-      
-      // Australian wines
-      { base: "Barossa Valley", regions: ["Eden Valley", "Adelaide Hills"], country: "Australien", varieties: ["Shiraz"], priceRange: [180, 1200] },
-      
-      // New Zealand wines
-      { base: "Marlborough", regions: ["Wairau Valley", "Awatere Valley"], country: "Nya Zeeland", varieties: ["Sauvignon Blanc"], priceRange: [120, 500] },
-      
-      // Portuguese wines  
-      { base: "Douro", regions: ["Quinta do Noval", "Taylor Fladgate"], country: "Portugal", varieties: ["Port Blend"], priceRange: [200, 2000] },
-      
-      // Argentine wines
-      { base: "Mendoza", regions: ["Maipú", "Luján de Cuyo"], country: "Argentina", varieties: ["Malbec"], priceRange: [150, 800] }
-    ];
-
-    const producers = [
-      "Château Margaux", "Domaine de la Romanée-Conti", "Antinori", "Torres", 
-      "Caymus", "Opus One", "Penfolds", "Cloudy Bay", "Dom Pérignon", "Krug",
-      "Barolo Mascarello", "Ornellaia", "Vega Sicilia", "Dr. Loosen", 
-      "Screaming Eagle", "Harlan Estate", "Henschke", "Te Mata", "Quinta do Noval",
-      "Catena Zapata", "Luigi Bosca", "Concha y Toro", "Santa Rita", "Errazuriz"
-    ];
-
-    const descriptors = [
-      "Elegant and refined", "Bold and powerful", "Crisp and mineral", 
-      "Rich and complex", "Smooth and velvety", "Fresh and vibrant",
-      "Deep and concentrated", "Balanced and harmonious", "Intense and structured",
-      "Delicate and nuanced", "Full-bodied and robust", "Clean and precise"
-    ];
-
-    let allWines: any[] = [];
-    let productIdCounter = 2000;
-
-    // Generate wines for each template
-    for (const template of wineTemplates) {
-      const winesPerTemplate = Math.floor(Math.random() * 15) + 20; // 20-35 wines per template
-      
-      for (let i = 0; i < winesPerTemplate; i++) {
-        const vintage = 2015 + Math.floor(Math.random() * 9); // 2015-2023
-        const producer = producers[Math.floor(Math.random() * producers.length)];
-        const region = template.regions[Math.floor(Math.random() * template.regions.length)];
-        const variety = template.varieties[Math.floor(Math.random() * template.varieties.length)];
-        const price = Math.floor(Math.random() * (template.priceRange[1] - template.priceRange[0])) + template.priceRange[0];
-        
-        // Try to match with review data
-        const reviewMatch = sampleWineReviews.find(review => 
-          review.country?.toLowerCase() === template.country.toLowerCase() ||
-          review.variety?.toLowerCase().includes(variety.toLowerCase())
-        );
-        
-        const metrics = generateInvestmentMetrics({
-          productId: productIdCounter.toString(),
-          productNameThin: `${producer} ${template.base} ${vintage}`,
-          productNameBold: `${producer} ${template.base}`,
-          producer,
-          originLevel1: template.country,
-          originLevel2: region,
-          vintage,
-          price,
-          alcoholPercentage: 12 + Math.random() * 4, // 12-16%
-          categoryLevel1: "Vin",
-          categoryLevel2: variety.includes("Blend") || variety === "Champagne Blend" ? "Mousserande vin" : 
-                         variety === "Chardonnay" || variety === "Sauvignon Blanc" || variety === "Riesling" ? "Vitt vin" : "Rött vin",
-          category: variety.includes("Blend") || variety === "Champagne Blend" ? "Mousserande vin" : 
-                   variety === "Chardonnay" || variety === "Sauvignon Blanc" || variety === "Riesling" ? "Vitt vin" : "Rött vin",
-          assortment: Math.random() > 0.7 ? "Beställningssortiment" : "Ordinarie sortiment",
-          assortmentText: Math.random() > 0.7 ? "Beställningssortiment" : "Ordinarie sortiment",
-          taste: descriptors[Math.floor(Math.random() * descriptors.length)],
-          style: `${variety} med karaktär av ${region}`
-        } as SystembolagetProduct, reviewMatch);
-
-        const wine = {
-          product_id: (productIdCounter++).toString(),
-          name: `${producer} ${template.base} ${vintage}`,
-          producer,
-          category: variety.includes("Blend") || variety === "Champagne Blend" ? "Mousserande vin" : 
-                   variety === "Chardonnay" || variety === "Sauvignon Blanc" || variety === "Riesling" ? "Vitt vin" : "Rött vin",
-          country: template.country,
-          region,
-          vintage,
-          alcohol_percentage: 12 + Math.random() * 4,
-          price,
-          description: reviewMatch?.description || `${descriptors[Math.floor(Math.random() * descriptors.length)]} ${variety} från ${region}. Perfekt balans mellan frukt och struktur.`,
-          sales_start_date: `2023-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-01`,
-          assortment: Math.random() > 0.7 ? "Beställningssortiment" : "Ordinarie sortiment",
-          ...metrics
-        };
-
-        allWines.push(wine);
-      }
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    const totalProductCount = allWines.length;
-    console.log(`Generated ${totalProductCount} wines for insertion`);
+    const data = await response.json();
+    const allProducts = data.products || [];
+    
+    console.log(`Fetched ${allProducts.length} total products from susbolaget API`);
+    
+    const totalProductCount = allProducts.length;
     
     // Update sync status with total count
     await supabase
@@ -422,40 +316,35 @@ async function performFullSync(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    // Insert wines in batches
-    const batchSize = 100;
-    let insertedCount = 0;
+    // Process products in chunks
+    const chunkSize = 200;
+    let processedCount = 0;
+    let totalWinesInserted = 0;
     
-    for (let i = 0; i < allWines.length; i += batchSize) {
-      const batch = allWines.slice(i, i + batchSize);
+    for (let i = 0; i < allProducts.length; i += chunkSize) {
+      const chunk = allProducts.slice(i, i + chunkSize);
+      console.log(`Processing chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(allProducts.length/chunkSize)}`);
       
-      try {
-        const { error } = await supabase
-          .from('wines')
-          .upsert(batch, { onConflict: 'product_id' });
-
-        if (error) {
-          console.error('Error inserting wine batch:', error);
-          continue;
-        }
-
-        insertedCount += batch.length;
-        console.log(`Inserted batch of ${batch.length} wines. Total: ${insertedCount}`);
-
-        // Update progress
-        await supabase
-          .from('sync_status')
-          .update({
-            processed_products: insertedCount,
-            wines_inserted: insertedCount,
-            last_product_processed: `Batch ${Math.floor(i/batchSize) + 1}`,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', syncId);
-        
-      } catch (error) {
-        console.error('Error processing wine batch:', error);
-      }
+      const insertedCount = await processProductChunk(supabase, chunk, syncId);
+      totalWinesInserted += insertedCount;
+      
+      processedCount += chunk.length;
+      
+      // Update progress
+      await supabase
+        .from('sync_status')
+        .update({
+          processed_products: processedCount,
+          wines_inserted: totalWinesInserted,
+          last_product_processed: `Chunk ${Math.floor(i/chunkSize) + 1}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', syncId);
+      
+      console.log(`Progress: ${processedCount}/${totalProductCount} products processed, ${totalWinesInserted} wines inserted`);
+      
+      // Small delay between chunks to prevent overwhelming the server
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     // Mark sync as completed
@@ -464,17 +353,17 @@ async function performFullSync(supabase: any, syncId: string) {
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        wines_inserted: insertedCount,
+        wines_inserted: totalWinesInserted,
         updated_at: new Date().toISOString()
       })
       .eq('id', syncId);
 
-    console.log('Comprehensive wine dataset generation completed!');
+    console.log('Comprehensive sync from susbolaget.emrik.org completed successfully!');
     return {
       success: true,
-      message: 'Comprehensive wine dataset generated successfully',
+      message: 'Full sync from susbolaget.emrik.org with wine reviews integration completed successfully',
       totalProducts: totalProductCount,
-      winesInserted: insertedCount
+      winesInserted: totalWinesInserted
     };
 
   } catch (error) {
