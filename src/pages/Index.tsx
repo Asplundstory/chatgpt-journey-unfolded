@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WineList } from "@/components/WineList";
 import { WineFilters } from "@/components/WineFilters";
+import { LaunchPlans } from "@/components/LaunchPlans";
 import { useSystembolagetData } from "@/hooks/useSystembolagetData";
 
 const Index = () => {
@@ -228,83 +229,93 @@ const Index = () => {
 
       {/* Search and Filters */}
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 space-y-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Sök efter vin, producent, land..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-8">
+            <div className="space-y-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Sök efter vin, producent, land..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
 
-          <WineFilters filters={filters} onFiltersChange={setFilters} />
+              <WineFilters filters={filters} onFiltersChange={setFilters} />
 
-          {/* Filter Control Buttons */}
-          <div className="flex flex-wrap gap-3 pt-4 border-t">
-            <Button 
-              onClick={applyFilters}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              Applicera filter
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={clearFilters}
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Rensa val
-            </Button>
-            
-            <Button 
-              variant="secondary" 
-              onClick={showHotInvestments}
-              className="flex items-center gap-2"
-            >
-              <TrendingUp className="h-4 w-4" />
-              Föreslå hetaste investeringar
-            </Button>
-          </div>
-        </div>
-
-        {/* Results */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-foreground">
-            {loading ? (
-              <>Laddar vindata från Systembolaget...</>
-            ) : showSuggestions ? (
-              <>Hottest investeringar just nu (Topp 10)</>
-            ) : (
-              <>Visar {filteredWines.length} viner</>
-            )}
-          </h2>
-          {showSuggestions && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Sorterat efter investeringsbetyg och 5-års prognostiserad avkastning
-            </p>
-          )}
-          {error && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Kunde ej ladda från Systembolaget API - använder fallback-data
-            </p>
-          )}
-        </div>
-
-        {/* Wine List */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Hämtar vindata...</p>
+              {/* Filter Control Buttons */}
+              <div className="flex flex-wrap gap-3 pt-4 border-t">
+                <Button 
+                  onClick={applyFilters}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Applicera filter
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={clearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Rensa val
+                </Button>
+                
+                <Button 
+                  variant="secondary" 
+                  onClick={showHotInvestments}
+                  className="flex items-center gap-2"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Föreslå hetaste investeringar
+                </Button>
+              </div>
             </div>
+
+            {/* Results */}
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-foreground">
+                {loading ? (
+                  <>Laddar vindata från Systembolaget...</>
+                ) : showSuggestions ? (
+                  <>Hottest investeringar just nu (Topp 10)</>
+                ) : (
+                  <>Visar {filteredWines.length} viner</>
+                )}
+              </h2>
+              {showSuggestions && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Sorterat efter investeringsbetyg och 5-års prognostiserad avkastning
+                </p>
+              )}
+              {error && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Kunde ej ladda från Systembolaget API - använder fallback-data
+                </p>
+              )}
+            </div>
+
+            {/* Wine List */}
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Hämtar vindata...</p>
+                </div>
+              </div>
+            ) : (
+              <WineList wines={filteredWines} />
+            )}
           </div>
-        ) : (
-          <WineList wines={filteredWines} />
-        )}
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            <LaunchPlans />
+          </div>
+        </div>
       </div>
     </div>
   );
