@@ -219,7 +219,7 @@ async function processProductChunk(supabase: any, products: SystembolagetProduct
 
   // Process wines in smaller sub-batches to prevent memory buildup
   let totalInserted = 0;
-  const subBatchSize = 25; // Smaller batches for memory efficiency
+  const subBatchSize = 50; // Optimized batch size
   
   for (let i = 0; i < wineProducts.length; i += subBatchSize) {
     const subBatch = wineProducts.slice(i, i + subBatchSize);
@@ -294,58 +294,118 @@ async function streamProcessProducts(supabase: any, syncId: string) {
 
     console.log('Testing API endpoints...');
     
-    // Try multiple API endpoints in order of preference
+    // Try multiple API endpoints with pagination support
     const endpoints = [
-      'https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search?page=1&size=30&categoryLevel1=Vin',
-      'https://susbolaget.emrik.org/v1/products',
-      'https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json'
+      {
+        url: 'https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search',
+        type: 'paginated' as const,
+        params: { categoryLevel1: 'Vin', size: 1000 }
+      },
+      {
+        url: 'https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json',
+        type: 'single' as const
+      }
     ];
 
-    let allProducts = [];
+    let allProducts: SystembolagetProduct[] = [];
     let successfulEndpoint = '';
 
     for (const endpoint of endpoints) {
       try {
-        console.log(`Trying endpoint: ${endpoint}`);
-        
-        const response = await fetch(endpoint, {
-          headers: {
-            'User-Agent': 'WineInvestmentApp/1.0',
-            'Accept': 'application/json'
+        if (endpoint.type === 'paginated') {
+          console.log(`Trying paginated endpoint: ${endpoint.url}`);
+          
+          // Fetch multiple pages to get more products
+          let page = 1;
+          let hasMore = true;
+          
+          while (hasMore && page <= 10) { // Limit to 10 pages to prevent infinite loops
+            const params = new URLSearchParams({
+              ...Object.fromEntries(
+                Object.entries(endpoint.params).map(([key, value]) => [key, String(value)])
+              ),
+              page: page.toString()
+            });
+            
+            const response = await fetch(`${endpoint.url}?${params}`, {
+              headers: {
+                'User-Agent': 'WineInvestmentApp/1.0',
+                'Accept': 'application/json'
+              }
+            });
+            
+            if (!response.ok) {
+              console.log(`Page ${page} failed: ${response.status} ${response.statusText}`);
+              break;
+            }
+            
+            const data = await response.json();
+            let pageProducts = [];
+            
+            if (data.productSearchResult && data.productSearchResult.products) {
+              pageProducts = data.productSearchResult.products;
+              hasMore = data.productSearchResult.totalPages > page;
+            } else if (data.products && Array.isArray(data.products)) {
+              pageProducts = data.products;
+              hasMore = endpoint.params ? pageProducts.length === endpoint.params.size : false;
+            }
+            
+            if (pageProducts.length === 0) {
+              hasMore = false;
+            } else {
+              allProducts = allProducts.concat(pageProducts);
+              console.log(`Page ${page}: ${pageProducts.length} products, total: ${allProducts.length}`);
+              page++;
+            }
+            
+            // Small delay between requests
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
-        });
-        
-        if (!response.ok) {
-          console.log(`Endpoint failed: ${response.status} ${response.statusText}`);
-          continue;
-        }
-        
-        const data = await response.json();
-        console.log(`Response type: ${typeof data}, is array: ${Array.isArray(data)}`);
-        
-        // Handle different response structures
-        if (Array.isArray(data)) {
-          allProducts = data;
-        } else if (data.products && Array.isArray(data.products)) {
-          allProducts = data.products;
-        } else if (data.productSearchResult && data.productSearchResult.products) {
-          allProducts = data.productSearchResult.products;
-        } else if (data.data && Array.isArray(data.data)) {
-          allProducts = data.data;
+          
+          if (allProducts.length > 0) {
+            successfulEndpoint = endpoint.url;
+            console.log(`Successfully fetched ${allProducts.length} products from paginated endpoint`);
+            break;
+          }
+          
         } else {
-          console.log('Unknown response structure:', Object.keys(data));
-          continue;
-        }
-        
-        if (allProducts.length > 0) {
-          successfulEndpoint = endpoint;
-          console.log(`Successfully fetched ${allProducts.length} products from ${endpoint}`);
-          console.log('Sample product:', JSON.stringify(allProducts[0], null, 2));
-          break;
+          console.log(`Trying single endpoint: ${endpoint.url}`);
+          
+          const response = await fetch(endpoint.url, {
+            headers: {
+              'User-Agent': 'WineInvestmentApp/1.0',
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!response.ok) {
+            console.log(`Endpoint failed: ${response.status} ${response.statusText}`);
+            continue;
+          }
+          
+          const data = await response.json();
+          
+          // Handle different response structures
+          if (Array.isArray(data)) {
+            allProducts = data;
+          } else if (data.products && Array.isArray(data.products)) {
+            allProducts = data.products;
+          } else if (data.data && Array.isArray(data.data)) {
+            allProducts = data.data;
+          } else {
+            console.log('Unknown response structure:', Object.keys(data));
+            continue;
+          }
+          
+          if (allProducts.length > 0) {
+            successfulEndpoint = endpoint.url;
+            console.log(`Successfully fetched ${allProducts.length} products from ${endpoint.url}`);
+            break;
+          }
         }
         
       } catch (error) {
-        console.log(`Error with endpoint ${endpoint}:`, error instanceof Error ? error.message : String(error));
+        console.log(`Error with endpoint ${endpoint.url}:`, error instanceof Error ? error.message : String(error));
         continue;
       }
     }
@@ -367,7 +427,7 @@ async function streamProcessProducts(supabase: any, syncId: string) {
       .eq('id', syncId);
 
     // Process in smaller chunks to prevent memory issues
-    const chunkSize = 50; // Even smaller chunks
+    const chunkSize = 100; // Optimized chunk size
     const chunks = Math.ceil(totalProductCount / chunkSize);
     
     for (let i = 0; i < totalProductCount; i += chunkSize) {
@@ -415,9 +475,90 @@ async function streamProcessProducts(supabase: any, syncId: string) {
   }
 }
 
+async function syncLaunchPlans(supabase: any) {
+  console.log('Syncing launch plans...');
+  
+  try {
+    // Try to fetch launch plans from Systembolaget
+    const launchPlanEndpoints = [
+      'https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search?assortment=FS&size=1000',
+      'https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search?assortment=TSE&size=1000'
+    ];
+    
+    let totalLaunches = 0;
+    
+    for (const endpoint of launchPlanEndpoints) {
+      try {
+        console.log(`Fetching launch plans from: ${endpoint}`);
+        
+        const response = await fetch(endpoint, {
+          headers: {
+            'User-Agent': 'WineInvestmentApp/1.0',
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          console.log(`Launch plan endpoint failed: ${response.status}`);
+          continue;
+        }
+        
+        const data = await response.json();
+        let products = [];
+        
+        if (data.productSearchResult && data.productSearchResult.products) {
+          products = data.productSearchResult.products;
+        } else if (data.products) {
+          products = data.products;
+        }
+        
+        // Transform to launch plans
+        const launchPlans = products
+          .filter((product: SystembolagetProduct) => product.saleStartDate && new Date(product.saleStartDate) > new Date())
+          .map((product: SystembolagetProduct) => {
+            const saleDate = new Date(product.saleStartDate);
+            return {
+              title: `${product.productNameThin || product.productNameBold} - ${product.producer}`,
+              url: `https://www.systembolaget.se/produkt/${product.productId}`,
+              date: product.saleStartDate,
+              quarter: Math.ceil((saleDate.getMonth() + 1) / 3),
+              year: saleDate.getFullYear()
+            };
+          });
+        
+        if (launchPlans.length > 0) {
+          const { error } = await supabase
+            .from('launch_plans')
+            .upsert(launchPlans, { onConflict: 'url' });
+          
+          if (error) {
+            console.error('Error inserting launch plans:', error);
+          } else {
+            totalLaunches += launchPlans.length;
+            console.log(`Inserted ${launchPlans.length} launch plans`);
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error fetching launch plans:', error);
+      }
+    }
+    
+    return totalLaunches;
+    
+  } catch (error) {
+    console.error('Error in syncLaunchPlans:', error);
+    return 0;
+  }
+}
+
 async function performFullSync(supabase: any, syncId: string) {
   try {
     const result = await streamProcessProducts(supabase, syncId);
+    
+    // Also sync launch plans
+    console.log('Syncing launch plans...');
+    const launchPlansCount = await syncLaunchPlans(supabase);
 
     // Mark sync as completed
     await supabase
@@ -434,9 +575,10 @@ async function performFullSync(supabase: any, syncId: string) {
     console.log('Memory-efficient sync completed successfully!');
     return {
       success: true,
-      message: 'Memory-efficient sync completed successfully',
+      message: `Sync completed: ${result.totalWinesInserted} wines and ${launchPlansCount} launch plans`,
       totalProducts: result.totalProductCount,
-      winesInserted: result.totalWinesInserted
+      winesInserted: result.totalWinesInserted,
+      launchPlansInserted: launchPlansCount
     };
 
   } catch (error) {
