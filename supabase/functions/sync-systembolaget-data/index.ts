@@ -419,56 +419,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get the JWT token from the request headers
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'No authorization header provided'
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Verify the user is authenticated and get their ID
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !userData.user) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Invalid or expired token'
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Check if user has admin role
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id)
-      .eq('role', 'admin')
-      .single();
-
-    if (roleError || !roleData) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Admin access required'
-      }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log(`Admin user ${userData.user.email} initiated sync`);
+    console.log('Sync initiated');
 
     // Create a new sync record
     const { data: syncRecord, error: syncError } = await supabase
