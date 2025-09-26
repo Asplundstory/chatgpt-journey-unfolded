@@ -99,19 +99,21 @@ const calculateInvestmentMetrics = (product: SystembolagetProduct): Partial<Wine
   };
   
   // Calculate drinking window and storage time
+  const reasonableVintage = Math.min(Math.max(vintage, 1900), currentYear + 2);
+  
   const drinkingWindow = {
-    start: Math.max(currentYear, vintage + 2),
-    end: vintage + (product.price > 500 ? 25 : 10)
+    start: Math.max(currentYear, reasonableVintage + 2),
+    end: Math.min(reasonableVintage + (product.price > 500 ? 25 : 10), currentYear + 30)
   };
   
-  const storageTime = drinkingWindow.end - currentYear;
+  const storageTime = Math.max(1, Math.min(30, drinkingWindow.end - currentYear));
   
   return {
     investmentScore,
     valueAppreciation: Math.random() * 15 - 2.5, // -2.5% to +12.5%
     projectedReturns,
     drinkingWindow,
-    storageTime: Math.max(1, storageTime)
+    storageTime: storageTime
   };
 };
 
