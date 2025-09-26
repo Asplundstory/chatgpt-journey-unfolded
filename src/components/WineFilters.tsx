@@ -8,7 +8,6 @@ import { X } from "lucide-react";
 interface Filters {
   category: string;
   priceRange: number[];
-  alcoholContent: number[];
   country: string;
   vintage: string;
   drinkingWindowStart: string;
@@ -34,7 +33,6 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
     onFiltersChange({
       category: "",
       priceRange: [0, 1000],
-      alcoholContent: [0, 20],
       country: "",
       vintage: "",
       drinkingWindowStart: "",

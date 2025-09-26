@@ -13,7 +13,6 @@ const Index = () => {
   const [filters, setFilters] = useState({
     category: "",
     priceRange: [0, 1000],
-    alcoholContent: [0, 20],
     country: "",
     vintage: "",
     drinkingWindowStart: "",
@@ -39,7 +38,13 @@ const Index = () => {
       drinkingWindow: { start: 2025, end: 2045 },
       storageTime: 25,
       investmentScore: 9,
-      valueAppreciation: 12.5
+      valueAppreciation: 12.5,
+      projectedReturns: {
+        oneYear: 8.5,
+        threeYears: 22.0,
+        fiveYears: 45.5,
+        tenYears: 125.0
+      }
     },
     {
       id: 2,
@@ -56,7 +61,13 @@ const Index = () => {
       drinkingWindow: { start: 2024, end: 2028 },
       storageTime: 6,
       investmentScore: 6,
-      valueAppreciation: 3.2
+      valueAppreciation: 3.2,
+      projectedReturns: {
+        oneYear: 2.1,
+        threeYears: 8.5,
+        fiveYears: 15.2,
+        tenYears: 28.0
+      }
     },
     {
       id: 3,
@@ -73,7 +84,13 @@ const Index = () => {
       drinkingWindow: { start: 2026, end: 2038 },
       storageTime: 15,
       investmentScore: 8,
-      valueAppreciation: 8.7
+      valueAppreciation: 8.7,
+      projectedReturns: {
+        oneYear: 5.2,
+        threeYears: 18.8,
+        fiveYears: 35.0,
+        tenYears: 78.5
+      }
     }
   ];
 

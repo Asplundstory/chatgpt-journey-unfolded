@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Percent, Clock, TrendingUp } from "lucide-react";
+import { MapPin, Calendar, TrendingUp, Clock, BarChart3 } from "lucide-react";
 
 interface Wine {
   id: number;
@@ -21,6 +21,12 @@ interface Wine {
   storageTime: number; // years
   investmentScore?: number; // 1-10 scale from Wine-Searcher analysis
   valueAppreciation?: number; // percentage
+  projectedReturns: {
+    oneYear: number;
+    threeYears: number;
+    fiveYears: number;
+    tenYears: number;
+  };
 }
 
 interface WineCardProps {
@@ -56,7 +62,7 @@ export const WineCard = ({ wine }: WineCardProps) => {
               <span>{wine.vintage}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Percent className="h-3 w-3" />
+              <BarChart3 className="h-3 w-3" />
               <span>{wine.alcoholContent}%</span>
             </div>
           </div>
@@ -74,6 +80,34 @@ export const WineCard = ({ wine }: WineCardProps) => {
                 </span>
               </div>
             )}
+          </div>
+
+          {/* Projected Returns */}
+          <div className="grid grid-cols-4 gap-2 p-2 bg-accent/20 rounded-md">
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground">1år</div>
+              <div className="text-sm font-semibold text-primary">
+                {wine.projectedReturns.oneYear > 0 ? '+' : ''}{wine.projectedReturns.oneYear}%
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground">3år</div>
+              <div className="text-sm font-semibold text-primary">
+                {wine.projectedReturns.threeYears > 0 ? '+' : ''}{wine.projectedReturns.threeYears}%
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground">5år</div>
+              <div className="text-sm font-semibold text-primary">
+                {wine.projectedReturns.fiveYears > 0 ? '+' : ''}{wine.projectedReturns.fiveYears}%
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground">10år</div>
+              <div className="text-sm font-semibold text-primary">
+                {wine.projectedReturns.tenYears > 0 ? '+' : ''}{wine.projectedReturns.tenYears}%
+              </div>
+            </div>
           </div>
         </div>
 
