@@ -10,10 +10,12 @@ interface SystembolagetProduct {
   productNameThin: string;
   productNameBold: string;
   producer: string;
+  producerName?: string;
   supplierName: string;
   isKosher: boolean;
   alcoholPercentage: number;
   price: number;
+  priceIncVat?: number;
   pricePerLitre: number;
   saleStartDate: string;
   isDiscontinued: boolean;
@@ -28,16 +30,18 @@ interface SystembolagetProduct {
   usage: string;
   usageText: string;
   taste: string;
+  color?: string;
   tasteSymbols: string;
   style: string;
   packaging: string;
   seal: string;
   origin: string;
+  country?: string;
   originLevel1: string;
   originLevel2: string;
+  region?: string;
   vintage: number;
   subCategory: string;
-  color: string;
   sugar: string;
   acids: string;
   volume: number;
@@ -194,10 +198,9 @@ function generateInvestmentMetrics(product: SystembolagetProduct, reviewData?: W
 async function processProductChunk(supabase: any, products: SystembolagetProduct[], syncId: string) {
   console.log(`Processing chunk of ${products.length} products...`);
   
-  // Filter for wine products only
+  // Filter for wine products only - GitHub data uses different field names
   const wineProducts = products.filter(product => 
     product.categoryLevel1?.toLowerCase().includes('vin') ||
-    product.category?.toLowerCase().includes('wine') ||
     product.categoryLevel2?.toLowerCase().includes('rött') ||
     product.categoryLevel2?.toLowerCase().includes('vitt') ||
     product.categoryLevel2?.toLowerCase().includes('rosé') ||
@@ -211,12 +214,13 @@ async function processProductChunk(supabase: any, products: SystembolagetProduct
     return 0;
   }
 
-  // Transform products for database insertion with wine review matching
+  // Transform products for database insertion - adapt to GitHub JSON structure
   const transformedWines = wineProducts.map(product => {
     const reviewMatch = matchWineWithReviews(product);
     const metrics = generateInvestmentMetrics(product, reviewMatch);
     
-    let description = `${product.taste || ''} ${product.style || ''}`.trim() || null;
+    // GitHub JSON uses different field names
+    let description = `${product.taste || product.color || ''} ${product.style || ''}`.trim() || null;
     
     // Enhance description with review data if available
     if (reviewMatch?.description) {
@@ -226,13 +230,13 @@ async function processProductChunk(supabase: any, products: SystembolagetProduct
     return {
       product_id: product.productId,
       name: product.productNameThin || product.productNameBold,
-      producer: product.producer,
-      category: product.categoryLevel2 || product.category,
-      country: product.originLevel1,
-      region: product.originLevel2,
+      producer: product.producer || product.producerName,
+      category: product.categoryLevel2 || product.categoryLevel1,
+      country: product.country || product.originLevel1,
+      region: product.originLevel1 || product.region || product.originLevel2,
       vintage: product.vintage,
       alcohol_percentage: product.alcoholPercentage,
-      price: product.price,
+      price: product.price || product.priceIncVat,
       description: description,
       sales_start_date: product.saleStartDate ? new Date(product.saleStartDate).toISOString().split('T')[0] : null,
       assortment: product.assortmentText || product.assortment,
@@ -292,18 +296,18 @@ async function performFullSync(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    // Fetch products from susbolaget.emrik.org API
-    console.log('Fetching ALL products from susbolaget.emrik.org...');
-    const response = await fetch('https://susbolaget.emrik.org/v1/products');
+    // Fetch products from GitHub raw JSON file (updated Systembolaget data mirror)
+    console.log('Fetching ALL products from AlexGustafsson GitHub mirror...');
+    const response = await fetch('https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json');
     
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      throw new Error(`GitHub API request failed: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const allProducts = data.products || [];
+    const allProducts = await response.json();
     
-    console.log(`Fetched ${allProducts.length} total products from susbolaget API`);
+    console.log(`Fetched ${allProducts.length} total products from GitHub mirror`);
+    console.log('Sample product structure:', JSON.stringify(allProducts[0], null, 2));
     
     const totalProductCount = allProducts.length;
     
