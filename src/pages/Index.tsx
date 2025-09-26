@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { Search, Wine } from "lucide-react";
+import { Search, Wine, Filter, RotateCcw, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WineList } from "@/components/WineList";
@@ -18,6 +19,18 @@ const Index = () => {
     storageTimeRange: [0, 30],
     investmentScore: [0, 10]
   });
+  const [appliedFilters, setAppliedFilters] = useState({
+    category: "",
+    priceRange: [0, 1000],
+    country: "",
+    vintage: "",
+    drinkingWindowStart: "",
+    drinkingWindowEnd: "",
+    storageTimeRange: [0, 30],
+    investmentScore: [0, 10]
+  });
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Mock wine data - will be replaced with Systembolaget API data
   const mockWines = [
@@ -92,53 +105,95 @@ const Index = () => {
     }
   ];
 
-  // Filtered wines based on search and filters
+  // Filtered wines based on applied search and filters
   const filteredWines = useMemo(() => {
-    return mockWines.filter(wine => {
+    let wines = mockWines;
+
+    // If suggestions mode is active, show top investment opportunities
+    if (showSuggestions) {
+      return [...mockWines]
+        .sort((a, b) => {
+          // Sort by investment score first, then by 5-year projected returns
+          const scoreA = (a.investmentScore || 0) * 10 + a.projectedReturns.fiveYears;
+          const scoreB = (b.investmentScore || 0) * 10 + b.projectedReturns.fiveYears;
+          return scoreB - scoreA;
+        })
+        .slice(0, 5); // Show top 5 suggestions
+    }
+
+    return wines.filter(wine => {
       // Search filter
-      const matchesSearch = !searchQuery || 
-        wine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        wine.producer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        wine.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        wine.region.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = !appliedSearchQuery || 
+        wine.name.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
+        wine.producer.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
+        wine.country.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
+        wine.region.toLowerCase().includes(appliedSearchQuery.toLowerCase());
 
       // Category filter
-      const matchesCategory = !filters.category || 
-        wine.category.toLowerCase() === filters.category.toLowerCase();
+      const matchesCategory = !appliedFilters.category || 
+        wine.category.toLowerCase() === appliedFilters.category.toLowerCase();
 
       // Price filter
-      const matchesPrice = wine.price >= filters.priceRange[0] && 
-        wine.price <= filters.priceRange[1];
+      const matchesPrice = wine.price >= appliedFilters.priceRange[0] && 
+        wine.price <= appliedFilters.priceRange[1];
 
       // Country filter
-      const matchesCountry = !filters.country || 
-        wine.country.toLowerCase() === filters.country.toLowerCase();
+      const matchesCountry = !appliedFilters.country || 
+        wine.country.toLowerCase() === appliedFilters.country.toLowerCase();
 
       // Vintage filter
-      const matchesVintage = !filters.vintage || 
-        wine.vintage.toString() === filters.vintage;
+      const matchesVintage = !appliedFilters.vintage || 
+        wine.vintage.toString() === appliedFilters.vintage;
 
       // Drinking window filters
-      const matchesDrinkingStart = !filters.drinkingWindowStart || 
-        wine.drinkingWindow.start >= parseInt(filters.drinkingWindowStart);
+      const matchesDrinkingStart = !appliedFilters.drinkingWindowStart || 
+        wine.drinkingWindow.start >= parseInt(appliedFilters.drinkingWindowStart);
       
-      const matchesDrinkingEnd = !filters.drinkingWindowEnd || 
-        wine.drinkingWindow.end <= parseInt(filters.drinkingWindowEnd.replace('+', ''));
+      const matchesDrinkingEnd = !appliedFilters.drinkingWindowEnd || 
+        wine.drinkingWindow.end <= parseInt(appliedFilters.drinkingWindowEnd.replace('+', ''));
 
       // Storage time filter
-      const matchesStorageTime = wine.storageTime >= filters.storageTimeRange[0] && 
-        wine.storageTime <= filters.storageTimeRange[1];
+      const matchesStorageTime = wine.storageTime >= appliedFilters.storageTimeRange[0] && 
+        wine.storageTime <= appliedFilters.storageTimeRange[1];
 
       // Investment score filter
       const matchesInvestmentScore = !wine.investmentScore || 
-        (wine.investmentScore >= filters.investmentScore[0] && 
-         wine.investmentScore <= filters.investmentScore[1]);
+        (wine.investmentScore >= appliedFilters.investmentScore[0] && 
+         wine.investmentScore <= appliedFilters.investmentScore[1]);
 
       return matchesSearch && matchesCategory && matchesPrice && 
              matchesCountry && matchesVintage && matchesDrinkingStart && 
              matchesDrinkingEnd && matchesStorageTime && matchesInvestmentScore;
     });
-  }, [searchQuery, filters, mockWines]);
+  }, [appliedSearchQuery, appliedFilters, mockWines, showSuggestions]);
+
+  const applyFilters = () => {
+    setAppliedFilters({ ...filters });
+    setAppliedSearchQuery(searchQuery);
+    setShowSuggestions(false);
+  };
+
+  const clearFilters = () => {
+    const defaultFilters = {
+      category: "",
+      priceRange: [0, 1000],
+      country: "",
+      vintage: "",
+      drinkingWindowStart: "",
+      drinkingWindowEnd: "",
+      storageTimeRange: [0, 30],
+      investmentScore: [0, 10]
+    };
+    setFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
+    setSearchQuery("");
+    setAppliedSearchQuery("");
+    setShowSuggestions(false);
+  };
+
+  const showHotInvestments = () => {
+    setShowSuggestions(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -171,13 +226,51 @@ const Index = () => {
           </div>
 
           <WineFilters filters={filters} onFiltersChange={setFilters} />
+
+          {/* Filter Control Buttons */}
+          <div className="flex flex-wrap gap-3 pt-4 border-t">
+            <Button 
+              onClick={applyFilters}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Applicera filter
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={clearFilters}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Rensa val
+            </Button>
+            
+            <Button 
+              variant="secondary" 
+              onClick={showHotInvestments}
+              className="flex items-center gap-2"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Föreslå hetaste investeringar
+            </Button>
+          </div>
         </div>
 
         {/* Results */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-foreground">
-            Visar {filteredWines.length} viner
+            {showSuggestions ? (
+              <>Hottest investeringar just nu (Topp 5)</>
+            ) : (
+              <>Visar {filteredWines.length} viner</>
+            )}
           </h2>
+          {showSuggestions && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Sorterat efter investeringsbetyg och 5-års prognostiserad avkastning
+            </p>
+          )}
         </div>
 
         {/* Wine List */}
