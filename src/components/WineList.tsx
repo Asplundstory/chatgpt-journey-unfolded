@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Clock, TrendingUp, BarChart3 } from "lucide-react";
+import { MapPin, Calendar, Clock, TrendingUp, BarChart3, Package, ShoppingCart } from "lucide-react";
 
 interface Wine {
   id: number;
@@ -14,6 +14,8 @@ interface Wine {
   vintage: number;
   description: string;
   image: string;
+  salesStart?: string;
+  assortment?: string;
   drinkingWindow: {
     start: number;
     end: number;
@@ -59,9 +61,16 @@ export const WineList = ({ wines }: WineListProps) => {
                     </h3>
                     <p className="text-sm text-muted-foreground">{wine.producer}</p>
                   </div>
-                  <Badge variant="secondary" className="ml-4">
-                    {wine.category}
-                  </Badge>
+                  <div className="flex gap-2 ml-4">
+                    <Badge variant="secondary">
+                      {wine.category}
+                    </Badge>
+                    {wine.assortment && (
+                      <Badge variant={wine.assortment === 'Kommande lansering' ? 'default' : 'outline'}>
+                        {wine.assortment}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
@@ -81,6 +90,12 @@ export const WineList = ({ wines }: WineListProps) => {
                     <Clock className="h-3 w-3" />
                     <span>Drick: {wine.drinkingWindow.start}-{wine.drinkingWindow.end}</span>
                   </div>
+                  {wine.salesStart && (
+                    <div className="flex items-center gap-1">
+                      <ShoppingCart className="h-3 w-3" />
+                      <span>Säljstart: {new Date(wine.salesStart).toLocaleDateString('sv-SE')}</span>
+                    </div>
+                  )}
                   {wine.investmentScore && (
                     <div className="flex items-center gap-1">
                       <TrendingUp className="h-3 w-3" />

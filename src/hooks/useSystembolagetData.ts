@@ -19,6 +19,9 @@ export interface SystembolagetProduct {
   vintage?: number;
   assortmentText?: string;
   producerName?: string;
+  // Fields for upcoming releases
+  salesStart?: string;
+  assortment?: string;
   // Additional fields we'll calculate/estimate
   investmentScore?: number;
   valueAppreciation?: number;
@@ -48,6 +51,8 @@ export interface Wine {
   vintage: number;
   description: string;
   image: string;
+  salesStart?: string;
+  assortment?: string;
   drinkingWindow: {
     start: number;
     end: number;
@@ -133,6 +138,8 @@ const transformProduct = (product: SystembolagetProduct, index: number): Wine =>
     vintage: product.vintage || currentYear - 2,
     description: product.taste || product.assortmentText || 'Ingen beskrivning tillgänglig',
     image: '/placeholder.svg',
+    salesStart: product.salesStart,
+    assortment: product.assortment,
     drinkingWindow: metrics.drinkingWindow || { start: currentYear, end: currentYear + 5 },
     storageTime: metrics.storageTime || 5,
     investmentScore: metrics.investmentScore,
@@ -156,25 +163,39 @@ export const useSystembolagetData = () => {
       try {
         setLoading(true);
         
-        // Try the main API endpoint first
-        let response;
-        try {
-          response = await fetch('https://susbolaget.emrik.org/v1/products');
-        } catch (apiError) {
-          // Fallback: use a smaller sample or local data
-          console.warn('Could not fetch from main API, using fallback data');
-          throw new Error('API not available');
+        // Fetch both regular products and upcoming releases
+        const [regularResponse, upcomingResponse] = await Promise.all([
+          fetch('https://susbolaget.emrik.org/v1/products').catch(() => null),
+          fetch('https://susbolaget.emrik.org/v1/launches').catch(() => null)
+        ]);
+        
+        let allProducts: SystembolagetProduct[] = [];
+        
+        // Process regular products
+        if (regularResponse?.ok) {
+          const regularData: SystembolagetProduct[] = await regularResponse.json();
+          allProducts = allProducts.concat(regularData.map(product => ({
+            ...product,
+            assortment: product.assortmentText || 'Ordinarie sortiment'
+          })));
         }
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        // Process upcoming releases
+        if (upcomingResponse?.ok) {
+          const upcomingData: SystembolagetProduct[] = await upcomingResponse.json();
+          allProducts = allProducts.concat(upcomingData.map(product => ({
+            ...product,
+            assortment: 'Kommande lansering'
+          })));
         }
         
-        const data: SystembolagetProduct[] = await response.json();
+        if (allProducts.length === 0) {
+          throw new Error('No data available from any API endpoint');
+        }
         
         // Filter for wine products specifically - look for actual wine categories
         const wineCategories = ['Rött vin', 'Vitt vin', 'Mousserande vin', 'Rosé', 'Starkvin', 'Glögg & Glühwein'];
-        const wineProducts = data
+        const wineProducts = allProducts
           .filter(product => 
             wineCategories.some(category => 
               product.categoryLevel1?.includes(category) || 
