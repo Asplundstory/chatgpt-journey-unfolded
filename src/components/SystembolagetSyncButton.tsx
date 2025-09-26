@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Clock, TestTube } from "lucide-react";
+import { Download, Clock, TestTube, Zap } from "lucide-react";
 import { useSystembolagetSync } from "@/hooks/useSystembolagetSync";
 import { useToast } from "@/components/ui/use-toast";
 import { SyncProgressCard } from "./SyncProgressCard";
@@ -12,6 +12,7 @@ export const SystembolagetSyncButton = () => {
   const { toast } = useToast();
   const { isRunning } = useSyncStatus();
   const [testLoading, setTestLoading] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false);
 
   const handleSync = async () => {
     const syncResult = await syncData();
@@ -27,6 +28,56 @@ export const SystembolagetSyncButton = () => {
         description: syncResult.error || "Kunde inte starta synkning",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleBatchSync = async () => {
+    setBatchLoading(true);
+    try {
+      let totalWines = 0;
+      let batchNumber = 1;
+      let hasMore = true;
+      
+      toast({
+        title: "Batch-synkning startad!",
+        description: "Processar alla viner i batchar...",
+      });
+      
+      while (hasMore && batchNumber <= 50) { // Limit to 50 batches max
+        console.log(`Running batch ${batchNumber}...`);
+        
+        const { data, error } = await supabase.functions.invoke('batch-sync-systembolaget', {
+          body: { batchNumber, batchSize: 500 }
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        totalWines += data.winesInserted || 0;
+        hasMore = data.hasMore;
+        batchNumber = data.nextBatch || batchNumber + 1;
+        
+        console.log(`Batch ${batchNumber - 1} completed: ${data.winesInserted} wines inserted`);
+        
+        // Small delay between batches
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      toast({
+        title: "Batch-synkning slutförd!",
+        description: `${totalWines} viner har processats och lagts till.`,
+      });
+      
+    } catch (error) {
+      console.error('Batch sync error:', error);
+      toast({
+        title: "Batch-synkning misslyckades",
+        description: error instanceof Error ? error.message : "Kunde inte slutföra batch-synkning",
+        variant: "destructive",
+      });
+    } finally {
+      setBatchLoading(false);
     }
   };
 
@@ -57,10 +108,10 @@ export const SystembolagetSyncButton = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button 
           onClick={handleSync}
-          disabled={syncing || isRunning}
+          disabled={syncing || isRunning || batchLoading}
           className="flex items-center gap-2"
           variant="default"
         >
@@ -78,8 +129,27 @@ export const SystembolagetSyncButton = () => {
         </Button>
 
         <Button 
+          onClick={handleBatchSync}
+          disabled={batchLoading || syncing || isRunning}
+          className="flex items-center gap-2"
+          variant="secondary"
+        >
+          {batchLoading ? (
+            <>
+              <Clock className="h-4 w-4 animate-spin" />
+              Batch-synkar...
+            </>
+          ) : (
+            <>
+              <Zap className="h-4 w-4" />
+              Batch Sync (Alla Viner)
+            </>
+          )}
+        </Button>
+
+        <Button 
           onClick={handleTestInsert}
-          disabled={testLoading || syncing || isRunning}
+          disabled={testLoading || syncing || isRunning || batchLoading}
           className="flex items-center gap-2"
           variant="outline"
         >

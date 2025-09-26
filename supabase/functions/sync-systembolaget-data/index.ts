@@ -219,7 +219,7 @@ async function processProductChunk(supabase: any, products: SystembolagetProduct
 
   // Process wines in smaller sub-batches to prevent memory buildup
   let totalInserted = 0;
-  const subBatchSize = 50; // Optimized batch size
+  const subBatchSize = 10; // Very small batches for stability
   
   for (let i = 0; i < wineProducts.length; i += subBatchSize) {
     const subBatch = wineProducts.slice(i, i + subBatchSize);
@@ -277,7 +277,7 @@ async function processProductChunk(supabase: any, products: SystembolagetProduct
 }
 
 async function streamProcessProducts(supabase: any, syncId: string) {
-  console.log('Starting memory-efficient wine data sync...');
+  console.log('Starting batch wine data sync...');
   let totalWinesInserted = 0;
   let processedCount = 0;
 
@@ -292,130 +292,33 @@ async function streamProcessProducts(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    console.log('Testing API endpoints...');
+    console.log('Fetching wine data from GitHub...');
     
-    // Try multiple API endpoints with pagination support
-    const endpoints = [
-      {
-        url: 'https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search',
-        type: 'paginated' as const,
-        params: { categoryLevel1: 'Vin', size: 1000 }
-      },
-      {
-        url: 'https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json',
-        type: 'single' as const
+    // Use the GitHub endpoint which has all data
+    const endpoint = 'https://raw.githubusercontent.com/AlexGustafsson/systembolaget-api-data/main/data/assortment.json';
+    
+    console.log(`Fetching from: ${endpoint}`);
+    
+    const response = await fetch(endpoint, {
+      headers: {
+        'User-Agent': 'WineInvestmentApp/1.0',
+        'Accept': 'application/json'
       }
-    ];
-
-    let allProducts: SystembolagetProduct[] = [];
-    let successfulEndpoint = '';
-
-    for (const endpoint of endpoints) {
-      try {
-        if (endpoint.type === 'paginated') {
-          console.log(`Trying paginated endpoint: ${endpoint.url}`);
-          
-          // Fetch multiple pages to get more products
-          let page = 1;
-          let hasMore = true;
-          
-          while (hasMore && page <= 10) { // Limit to 10 pages to prevent infinite loops
-            const params = new URLSearchParams({
-              ...Object.fromEntries(
-                Object.entries(endpoint.params).map(([key, value]) => [key, String(value)])
-              ),
-              page: page.toString()
-            });
-            
-            const response = await fetch(`${endpoint.url}?${params}`, {
-              headers: {
-                'User-Agent': 'WineInvestmentApp/1.0',
-                'Accept': 'application/json'
-              }
-            });
-            
-            if (!response.ok) {
-              console.log(`Page ${page} failed: ${response.status} ${response.statusText}`);
-              break;
-            }
-            
-            const data = await response.json();
-            let pageProducts = [];
-            
-            if (data.productSearchResult && data.productSearchResult.products) {
-              pageProducts = data.productSearchResult.products;
-              hasMore = data.productSearchResult.totalPages > page;
-            } else if (data.products && Array.isArray(data.products)) {
-              pageProducts = data.products;
-              hasMore = endpoint.params ? pageProducts.length === endpoint.params.size : false;
-            }
-            
-            if (pageProducts.length === 0) {
-              hasMore = false;
-            } else {
-              allProducts = allProducts.concat(pageProducts);
-              console.log(`Page ${page}: ${pageProducts.length} products, total: ${allProducts.length}`);
-              page++;
-            }
-            
-            // Small delay between requests
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-          
-          if (allProducts.length > 0) {
-            successfulEndpoint = endpoint.url;
-            console.log(`Successfully fetched ${allProducts.length} products from paginated endpoint`);
-            break;
-          }
-          
-        } else {
-          console.log(`Trying single endpoint: ${endpoint.url}`);
-          
-          const response = await fetch(endpoint.url, {
-            headers: {
-              'User-Agent': 'WineInvestmentApp/1.0',
-              'Accept': 'application/json'
-            }
-          });
-          
-          if (!response.ok) {
-            console.log(`Endpoint failed: ${response.status} ${response.statusText}`);
-            continue;
-          }
-          
-          const data = await response.json();
-          
-          // Handle different response structures
-          if (Array.isArray(data)) {
-            allProducts = data;
-          } else if (data.products && Array.isArray(data.products)) {
-            allProducts = data.products;
-          } else if (data.data && Array.isArray(data.data)) {
-            allProducts = data.data;
-          } else {
-            console.log('Unknown response structure:', Object.keys(data));
-            continue;
-          }
-          
-          if (allProducts.length > 0) {
-            successfulEndpoint = endpoint.url;
-            console.log(`Successfully fetched ${allProducts.length} products from ${endpoint.url}`);
-            break;
-          }
-        }
-        
-      } catch (error) {
-        console.log(`Error with endpoint ${endpoint.url}:`, error instanceof Error ? error.message : String(error));
-        continue;
-      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
     }
+    
+    const allProducts = await response.json() as SystembolagetProduct[];
+    console.log(`Fetched ${allProducts.length} total products`);
 
     if (!allProducts || allProducts.length === 0) {
-      throw new Error('No products found from any API endpoint');
+      throw new Error('No products found');
     }
 
     const totalProductCount = allProducts.length;
-    console.log(`Found ${totalProductCount} total products from ${successfulEndpoint}`);
+    console.log(`Processing ${totalProductCount} total products`);
     
     // Update sync status with total count
     await supabase
@@ -426,12 +329,17 @@ async function streamProcessProducts(supabase: any, syncId: string) {
       })
       .eq('id', syncId);
 
-    // Process in smaller chunks to prevent memory issues
-    const chunkSize = 100; // Optimized chunk size
-    const chunks = Math.ceil(totalProductCount / chunkSize);
+    // Process only first 1000 products to avoid memory issues
+    const maxProducts = Math.min(1000, totalProductCount);
+    const productsToProcess = allProducts.slice(0, maxProducts);
+    console.log(`Processing first ${maxProducts} products to avoid memory limits`);
     
-    for (let i = 0; i < totalProductCount; i += chunkSize) {
-      const chunk = allProducts.slice(i, i + chunkSize);
+    // Process in very small chunks
+    const chunkSize = 25; // Much smaller chunks
+    const chunks = Math.ceil(maxProducts / chunkSize);
+    
+    for (let i = 0; i < maxProducts; i += chunkSize) {
+      const chunk = productsToProcess.slice(i, i + chunkSize);
       const chunkNum = Math.floor(i / chunkSize) + 1;
       
       console.log(`Processing chunk ${chunkNum}/${chunks} (${chunk.length} products)`);
@@ -452,13 +360,10 @@ async function streamProcessProducts(supabase: any, syncId: string) {
           })
           .eq('id', syncId);
           
-        console.log(`Progress: ${processedCount}/${totalProductCount} processed, ${totalWinesInserted} wines inserted`);
+        console.log(`Progress: ${processedCount}/${maxProducts} processed, ${totalWinesInserted} wines inserted`);
         
-        // Memory cleanup break every 5 chunks
-        if (chunkNum % 5 === 0) {
-          console.log('Memory cleanup break...');
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
+        // Add delay to prevent memory buildup
+        await new Promise(resolve => setTimeout(resolve, 200));
         
       } catch (chunkError) {
         console.error(`Error processing chunk ${chunkNum}:`, chunkError);
