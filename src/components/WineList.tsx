@@ -110,7 +110,7 @@ export const WineList = ({ wines }: WineListProps) => {
 
                 {wine.valueAppreciation && (
                   <div className="text-xs text-green-600 font-medium">
-                    +{wine.valueAppreciation}% värdeökning senaste året
+                    +{wine.valueAppreciation.toFixed(1)}% värdeökning senaste året
                   </div>
                 )}
 
@@ -119,25 +119,25 @@ export const WineList = ({ wines }: WineListProps) => {
                   <div className="text-center">
                     <div className="text-xs text-muted-foreground">1år</div>
                     <div className="text-sm font-semibold text-primary">
-                      {wine.projectedReturns.oneYear > 0 ? '+' : ''}{wine.projectedReturns.oneYear}%
+                      {wine.projectedReturns.oneYear > 0 ? '+' : ''}{wine.projectedReturns.oneYear.toFixed(1)}%
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-muted-foreground">3år</div>
                     <div className="text-sm font-semibold text-primary">
-                      {wine.projectedReturns.threeYears > 0 ? '+' : ''}{wine.projectedReturns.threeYears}%
+                      {wine.projectedReturns.threeYears > 0 ? '+' : ''}{wine.projectedReturns.threeYears.toFixed(1)}%
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-muted-foreground">5år</div>
                     <div className="text-sm font-semibold text-primary">
-                      {wine.projectedReturns.fiveYears > 0 ? '+' : ''}{wine.projectedReturns.fiveYears}%
+                      {wine.projectedReturns.fiveYears > 0 ? '+' : ''}{wine.projectedReturns.fiveYears.toFixed(1)}%
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-muted-foreground">10år</div>
                     <div className="text-sm font-semibold text-primary">
-                      {wine.projectedReturns.tenYears > 0 ? '+' : ''}{wine.projectedReturns.tenYears}%
+                      {wine.projectedReturns.tenYears > 0 ? '+' : ''}{wine.projectedReturns.tenYears.toFixed(1)}%
                     </div>
                   </div>
                 </div>
