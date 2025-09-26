@@ -238,8 +238,11 @@ export type Database = {
           projected_return_3y: number | null
           projected_return_5y: number | null
           region: string | null
+          review_description: string | null
+          review_points: number | null
           sales_start_date: string | null
           storage_time_months: number | null
+          taster_name: string | null
           updated_at: string
           value_appreciation: number | null
           vintage: number | null
@@ -265,8 +268,11 @@ export type Database = {
           projected_return_3y?: number | null
           projected_return_5y?: number | null
           region?: string | null
+          review_description?: string | null
+          review_points?: number | null
           sales_start_date?: string | null
           storage_time_months?: number | null
+          taster_name?: string | null
           updated_at?: string
           value_appreciation?: number | null
           vintage?: number | null
@@ -292,8 +298,11 @@ export type Database = {
           projected_return_3y?: number | null
           projected_return_5y?: number | null
           region?: string | null
+          review_description?: string | null
+          review_points?: number | null
           sales_start_date?: string | null
           storage_time_months?: number | null
+          taster_name?: string | null
           updated_at?: string
           value_appreciation?: number | null
           vintage?: number | null

@@ -185,6 +185,9 @@ function generateInvestmentMetrics(product: SystembolagetProduct, reviewData?: W
     drinking_window_start: Math.max(vintage + 2, currentYear),
     drinking_window_end: Math.max(vintage + 20, currentYear + 15),
     value_appreciation: (Math.random() * 15 + 3) * qualityMultiplier,
+    review_points: reviewData?.points || null,
+    review_description: reviewData?.description || null,
+    taster_name: reviewData?.taster_name || null
   };
 }
 
