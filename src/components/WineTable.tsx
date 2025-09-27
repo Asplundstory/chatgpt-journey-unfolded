@@ -47,7 +47,7 @@ interface WineTableProps {
 
 export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTableProps) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const { lists, addWineToList } = useWineLists();
+  const { lists, addWineToList, createList } = useWineLists();
 
   const toggleRow = (wineId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -228,26 +228,35 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                     </div>
                     <div className="p-4 flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
                       <WineFavoriteButton wineId={wine.id} />
-                      {lists.length > 0 && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {lists.map((list) => (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" title="Lägg till i lista">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-popover border z-50">
+                          {lists.length === 0 ? (
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                const newList = createList("Mina favoriter", "Automatiskt skapad lista");
+                                addWineToList(newList.id, wine.id);
+                              }}
+                            >
+                              📝 Skapa första lista
+                            </DropdownMenuItem>
+                          ) : (
+                            lists.map((list) => (
                               <DropdownMenuItem 
                                 key={list.id}
                                 onClick={() => addWineToList(list.id, wine.id)}
                                 disabled={list.wines.includes(wine.id)}
                               >
-                                {list.wines.includes(wine.id) ? '✓ ' : ''}{list.name}
+                                {list.wines.includes(wine.id) ? '✅ ' : '📝 '}{list.name}
                               </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                            ))
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </CollapsibleTrigger>
