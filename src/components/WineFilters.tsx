@@ -198,7 +198,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
 
         {/* Price Range Slider */}
         <div className="space-y-3">
-          <Label>Prisintervall: {filters.priceRange[0]} → {filters.priceRange[1]} kr</Label>
+          <Label>Prisintervall: {filters.priceRange[0]} → {filters.priceRange[1] >= 2000 ? `>${filters.priceRange[1]}` : filters.priceRange[1]} kr</Label>
           <Slider
             value={filters.priceRange}
             onValueChange={(value) => updateFilter("priceRange", value)}
@@ -211,7 +211,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
 
         {/* Storage Time Slider */}
         <div className="space-y-3">
-          <Label>Lagringstid: {filters.storageTimeRange[0]} → {filters.storageTimeRange[1]} år</Label>
+          <Label>Lagringstid: {filters.storageTimeRange[0]} → {filters.storageTimeRange[1] >= 30 ? `>${filters.storageTimeRange[1]}` : filters.storageTimeRange[1]} år</Label>
           <Slider
             value={filters.storageTimeRange}
             onValueChange={(value) => updateFilter("storageTimeRange", value)}
@@ -224,7 +224,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
 
         {/* Projected Return Sliders */}
         <div className="space-y-3">
-          <Label>Avkastning 1 år: {filters.projectedReturn1y[0]} → {filters.projectedReturn1y[1]}%</Label>
+          <Label>Avkastning 1 år: {filters.projectedReturn1y[0]} → {filters.projectedReturn1y[1] >= 100 ? `>${filters.projectedReturn1y[1]}` : filters.projectedReturn1y[1]}%</Label>
           <Slider
             value={filters.projectedReturn1y}
             onValueChange={(value) => updateFilter("projectedReturn1y", value)}
@@ -236,7 +236,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
         </div>
 
         <div className="space-y-3">
-          <Label>Avkastning 3 år: {filters.projectedReturn3y[0]} → {filters.projectedReturn3y[1]}%</Label>
+          <Label>Avkastning 3 år: {filters.projectedReturn3y[0]} → {filters.projectedReturn3y[1] >= 300 ? `>${filters.projectedReturn3y[1]}` : filters.projectedReturn3y[1]}%</Label>
           <Slider
             value={filters.projectedReturn3y}
             onValueChange={(value) => updateFilter("projectedReturn3y", value)}
@@ -248,7 +248,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
         </div>
 
         <div className="space-y-3">
-          <Label>Avkastning 5 år: {filters.projectedReturn5y[0]} → {filters.projectedReturn5y[1]}%</Label>
+          <Label>Avkastning 5 år: {filters.projectedReturn5y[0]} → {filters.projectedReturn5y[1] >= 500 ? `>${filters.projectedReturn5y[1]}` : filters.projectedReturn5y[1]}%</Label>
           <Slider
             value={filters.projectedReturn5y}
             onValueChange={(value) => updateFilter("projectedReturn5y", value)}
@@ -260,7 +260,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
         </div>
 
         <div className="space-y-3">
-          <Label>Avkastning 10 år: {filters.projectedReturn10y[0]} → {filters.projectedReturn10y[1]}%</Label>
+          <Label>Avkastning 10 år: {filters.projectedReturn10y[0]} → {filters.projectedReturn10y[1] >= 1000 ? `>${filters.projectedReturn10y[1]}` : filters.projectedReturn10y[1]}%</Label>
           <Slider
             value={filters.projectedReturn10y}
             onValueChange={(value) => updateFilter("projectedReturn10y", value)}
