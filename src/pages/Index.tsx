@@ -4,7 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { WineList } from "@/components/WineList";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
+import { WineTable, SortField, SortDirection } from "@/components/WineTable";
 import { WineFilters } from "@/components/WineFilters";
 import { WineRecommendations } from "@/components/WineRecommendations";
 import { useWines } from "@/hooks/useWines";
@@ -43,6 +51,14 @@ const Index = () => {
   });
   const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(100);
+  
+  // Sorting state
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   // Mock wine data - will be replaced with Systembolaget API data
   const mockWines = [
@@ -212,6 +228,82 @@ const Index = () => {
              matchesReturn1y && matchesReturn3y && matchesReturn5y && matchesReturn10y;
     });
   }, [appliedSearchQuery, appliedFilters, systembolagetWines, showSuggestions]);
+
+  // Sorted wines
+  const sortedWines = useMemo(() => {
+    if (!sortField || !sortDirection) {
+      return filteredWines;
+    }
+
+    return [...filteredWines].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'name':
+          aValue = a.name || '';
+          bValue = b.name || '';
+          break;
+        case 'country':
+          aValue = a.country || '';
+          bValue = b.country || '';
+          break;
+        case 'region':
+          aValue = a.region || '';
+          bValue = b.region || '';
+          break;
+        case 'vintage':
+          aValue = a.vintage || 0;
+          bValue = b.vintage || 0;
+          break;
+        case 'category':
+          aValue = a.category || '';
+          bValue = b.category || '';
+          break;
+        case 'assortment':
+          aValue = a.assortment || '';
+          bValue = b.assortment || '';
+          break;
+        case 'price':
+          aValue = a.price || 0;
+          bValue = b.price || 0;
+          break;
+        case 'investment_score':
+          aValue = a.investment_score || 0;
+          bValue = b.investment_score || 0;
+          break;
+        case 'projected_return_1y':
+          aValue = a.projected_return_1y || 0;
+          bValue = b.projected_return_1y || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue, 'sv') 
+          : bValue.localeCompare(aValue, 'sv');
+      }
+
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+  }, [filteredWines, sortField, sortDirection]);
+
+  // Paginated wines
+  const paginatedWines = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedWines.slice(startIndex, endIndex);
+  }, [sortedWines, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(sortedWines.length / itemsPerPage);
+
+  const handleSort = (field: SortField, direction: SortDirection) => {
+    setSortField(field);
+    setSortDirection(direction);
+    setCurrentPage(1); // Reset to first page when sorting
+  };
 
   const applyFilters = () => {
     setAppliedFilters({ ...filters });
@@ -385,14 +477,17 @@ const Index = () => {
                   <>Laddar vindata från Systembolaget...</>
                 ) : showSuggestions ? (
                   <>🔥 Hetaste investeringarna just nu</>
-                ) : (
-                  <>Visar {filteredWines.length} av {systembolagetWines.length} viner</>
-                )}
+                 ) : (
+                   <>Visar {paginatedWines.length} av {sortedWines.length} viner (totalt {systembolagetWines.length})</>
+                 )}
               </h2>
               {!loading && !showSuggestions && (
                 <div className="text-sm text-muted-foreground">
+                  {totalPages > 1 && (
+                    <p>Sida {currentPage} av {totalPages} ({itemsPerPage} viner per sida)</p>
+                  )}
                   {filteredWines.length < systembolagetWines.length && (
-                    <p>{systembolagetWines.length - filteredWines.length} viner filtrerade bort</p>
+                    <p>{systembolagetWines.length - sortedWines.length} viner filtrerade bort</p>
                   )}
                   {Object.entries(appliedFilters).some(([key, value]) => {
                     if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 75000;
@@ -439,7 +534,68 @@ const Index = () => {
               </div>
             </div>
           ) : (
-            <WineList wines={filteredWines} />
+            <div className="space-y-6">
+              <WineTable 
+                wines={paginatedWines} 
+                onSort={handleSort}
+                sortField={sortField}
+                sortDirection={sortDirection}
+              />
+              
+              {totalPages > 1 && (
+                <div className="flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage > 1) {
+                              setCurrentPage(currentPage - 1);
+                            }
+                          }}
+                          className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                        if (page > totalPages) return null;
+                        
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(page);
+                              }}
+                              isActive={currentPage === page}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage < totalPages) {
+                              setCurrentPage(currentPage + 1);
+                            }
+                          }}
+                          className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
