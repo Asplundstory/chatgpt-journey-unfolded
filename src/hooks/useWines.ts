@@ -38,19 +38,35 @@ export const useWines = () => {
     try {
       setLoading(true);
       console.log('Fetching wines from Supabase...');
-      const { data, error } = await supabase
-        .from('wines')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Fetch all wines in batches to avoid the 1000 row limit
+      let allWines: Wine[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
 
-      console.log('Supabase response:', { data, error });
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('wines')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + batchSize - 1);
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+
+        if (data && data.length > 0) {
+          allWines = [...allWines, ...data];
+          from += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
       }
 
-      console.log('Setting wines:', data?.length || 0, 'wines found');
-      setWines(data || []);
+      console.log('Supabase response: fetched', allWines.length, 'total wines');
+      setWines(allWines);
       setError(null);
     } catch (err) {
       console.error('Error fetching wines:', err);
