@@ -67,24 +67,25 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Assortment Filter - Multi-select */}
-        <div className="space-y-2">
-          <Label htmlFor="assortment">Sortiment</Label>
-          <MultiSelect
-            options={[
-              { value: "Beställningssortiment", label: "Beställningssortiment" },
-              { value: "Tillfälligt sortiment", label: "Tillfälligt sortiment" },
-              { value: "Ordinarie sortiment", label: "Ordinarie sortiment" },
-              { value: "Lokalproducerat", label: "Lokalproducerat" },
-              { value: "Presentförpackning", label: "Presentförpackning" },
-            ]}
-            value={filters.assortment}
-            onChange={(value) => updateFilter("assortment", value)}
-            placeholder="Alla sortiment"
-          />
-        </div>
+        {/* First row - 3 columns */}
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Assortment Filter - Multi-select */}
+          <div className="space-y-2">
+            <Label htmlFor="assortment">Sortiment</Label>
+            <MultiSelect
+              options={[
+                { value: "Beställningssortiment", label: "Beställningssortiment" },
+                { value: "Tillfälligt sortiment", label: "Tillfälligt sortiment" },
+                { value: "Ordinarie sortiment", label: "Ordinarie sortiment" },
+                { value: "Lokalproducerat", label: "Lokalproducerat" },
+                { value: "Presentförpackning", label: "Presentförpackning" },
+              ]}
+              value={filters.assortment}
+              onChange={(value) => updateFilter("assortment", value)}
+              placeholder="Alla sortiment"
+            />
+          </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Category Filter - Multi-select */}
           <div className="space-y-2">
             <Label htmlFor="category">Kategori</Label>
@@ -123,7 +124,10 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               placeholder="Alla länder"
             />
           </div>
+        </div>
 
+        {/* Second row - 3 columns */}
+        <div className="grid gap-6 md:grid-cols-3">
           {/* Vintage Filter - Multi-select */}
           <div className="space-y-2">
             <Label htmlFor="vintage">Årgång</Label>
