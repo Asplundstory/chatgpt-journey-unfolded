@@ -22,9 +22,18 @@ import {
   Clock, 
   TrendingUp, 
   BarChart3, 
-  ShoppingCart 
+  ShoppingCart,
+  Plus
 } from "lucide-react";
 import { Wine } from "@/hooks/useWines";
+import { WineFavoriteButton } from "./WineFavoriteButton";
+import { useWineLists } from "@/hooks/useWineLists";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type SortField = 'name' | 'country' | 'region' | 'vintage' | 'category' | 'assortment' | 'price' | 'investment_score' | 'projected_return_1y';
 export type SortDirection = 'asc' | 'desc' | null;
@@ -38,6 +47,7 @@ interface WineTableProps {
 
 export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTableProps) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const { lists, addWineToList } = useWineLists();
 
   const toggleRow = (wineId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -91,7 +101,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
     <Card>
       <CardContent className="p-0">
         <div className="w-full">
-          <div className="grid grid-cols-[40px_1fr_100px_120px_80px_120px_140px_80px_100px] border-b bg-muted/30">
+          <div className="grid grid-cols-[40px_1fr_100px_120px_80px_120px_140px_80px_100px_80px] border-b bg-muted/30">
             <div className="p-4"></div>
             <div className="p-4">
               <Button 
@@ -165,13 +175,16 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                 Investering {getSortIcon('investment_score')}
               </Button>
             </div>
+            <div className="p-4 text-center">
+              <span className="font-semibold">Åtgärder</span>
+            </div>
           </div>
           
           <div className="divide-y">
             {wines.map((wine) => (
               <Collapsible key={wine.id} open={expandedRows.has(wine.id)} onOpenChange={() => toggleRow(wine.id)}>
                 <CollapsibleTrigger asChild>
-                  <div className="grid grid-cols-[40px_1fr_100px_120px_80px_120px_140px_80px_100px] hover:bg-muted/50 cursor-pointer border-b">
+                  <div className="grid grid-cols-[40px_1fr_100px_120px_80px_120px_140px_80px_100px_80px] hover:bg-muted/50 cursor-pointer border-b">
                     <div className="p-4 flex items-center">
                       {expandedRows.has(wine.id) ? (
                         <ChevronUp className="h-4 w-4" />
@@ -211,6 +224,29 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                             {wine.investment_score}/10
                           </span>
                         </div>
+                      )}
+                    </div>
+                    <div className="p-4 flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <WineFavoriteButton wineId={wine.id} />
+                      {lists.length > 0 && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {lists.map((list) => (
+                              <DropdownMenuItem 
+                                key={list.id}
+                                onClick={() => addWineToList(list.id, wine.id)}
+                                disabled={list.wines.includes(wine.id)}
+                              >
+                                {list.wines.includes(wine.id) ? '✓ ' : ''}{list.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Wine, Filter, RotateCcw, TrendingUp } from "lucide-react";
+import { Search, Wine, Filter, RotateCcw, TrendingUp, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,11 +15,14 @@ import {
 import { WineTable, SortField, SortDirection } from "@/components/WineTable";
 import { WineFilters } from "@/components/WineFilters";
 import { WineRecommendations } from "@/components/WineRecommendations";
+import { WineListManager } from "@/components/WineListManager";
 import { useWines } from "@/hooks/useWines";
+import { useWineExport } from "@/hooks/useWineExport";
 import { SystembolagetSyncButton } from "@/components/SystembolagetSyncButton";
 
 const Index = () => {
   const { wines: systembolagetWines, loading, error, refetch } = useWines();
+  const { exportToCSV, exportToJSON } = useWineExport();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     category: "",
@@ -465,6 +468,16 @@ const Index = () => {
                 Uppdatera data
               </Button>
               
+              <Button 
+                variant="outline" 
+                onClick={() => exportToCSV(sortedWines, `vinlista_${new Date().toISOString().split('T')[0]}`)}
+                className="flex items-center gap-2"
+                disabled={sortedWines.length === 0}
+              >
+                <Download className="h-4 w-4" />
+                Exportera CSV
+              </Button>
+              
               <SystembolagetSyncButton />
             </div>
           </div>
@@ -598,6 +611,13 @@ const Index = () => {
             </div>
           )}
         </div>
+
+        {/* Wine Lists Manager */}
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <WineListManager wines={systembolagetWines} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
