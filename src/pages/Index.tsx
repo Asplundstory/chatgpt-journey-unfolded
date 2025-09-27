@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, Wine, Filter, RotateCcw, TrendingUp, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { SystembolagetSyncButton } from "@/components/SystembolagetSyncButton";
 const Index = () => {
   const { wines: systembolagetWines, loading, error, refetch } = useWines();
   const { exportToCSV, exportToJSON } = useWineExport();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     category: [] as string[],
@@ -316,10 +318,111 @@ const Index = () => {
     setCurrentPage(1); // Reset to first page when sorting
   };
 
+  // URL synchronization functions
+  const updateURLFromFilters = (filtersToSync: typeof filters, searchToSync: string) => {
+    const params = new URLSearchParams();
+    
+    // Add search query if present
+    if (searchToSync) {
+      params.set('search', searchToSync);
+    }
+    
+    // Add array filters if they have values
+    if (filtersToSync.category.length > 0) {
+      params.set('category', filtersToSync.category.join(','));
+    }
+    if (filtersToSync.country.length > 0) {
+      params.set('country', filtersToSync.country.join(','));
+    }
+    if (filtersToSync.vintage.length > 0) {
+      params.set('vintage', filtersToSync.vintage.join(','));
+    }
+    if (filtersToSync.assortment.length > 0) {
+      params.set('assortment', filtersToSync.assortment.join(','));
+    }
+    
+    // Add range filters if not default values
+    if (filtersToSync.priceRange[0] !== 0 || filtersToSync.priceRange[1] !== 75000) {
+      params.set('priceRange', `${filtersToSync.priceRange[0]}-${filtersToSync.priceRange[1]}`);
+    }
+    if (filtersToSync.storageTimeRange[0] !== 0 || filtersToSync.storageTimeRange[1] !== 30) {
+      params.set('storageTimeRange', `${filtersToSync.storageTimeRange[0]}-${filtersToSync.storageTimeRange[1]}`);
+    }
+    
+    // Add drinking window filters if present
+    if (filtersToSync.drinkingWindowStart) {
+      params.set('drinkingStart', filtersToSync.drinkingWindowStart);
+    }
+    if (filtersToSync.drinkingWindowEnd) {
+      params.set('drinkingEnd', filtersToSync.drinkingWindowEnd);
+    }
+    
+    // Add projected return filters if not default values
+    if (filtersToSync.projectedReturn1y[0] !== 0 || filtersToSync.projectedReturn1y[1] !== 100) {
+      params.set('return1y', `${filtersToSync.projectedReturn1y[0]}-${filtersToSync.projectedReturn1y[1]}`);
+    }
+    if (filtersToSync.projectedReturn3y[0] !== 0 || filtersToSync.projectedReturn3y[1] !== 300) {
+      params.set('return3y', `${filtersToSync.projectedReturn3y[0]}-${filtersToSync.projectedReturn3y[1]}`);
+    }
+    if (filtersToSync.projectedReturn5y[0] !== 0 || filtersToSync.projectedReturn5y[1] !== 500) {
+      params.set('return5y', `${filtersToSync.projectedReturn5y[0]}-${filtersToSync.projectedReturn5y[1]}`);
+    }
+    if (filtersToSync.projectedReturn10y[0] !== 0 || filtersToSync.projectedReturn10y[1] !== 1000) {
+      params.set('return10y', `${filtersToSync.projectedReturn10y[0]}-${filtersToSync.projectedReturn10y[1]}`);
+    }
+    
+    setSearchParams(params);
+  };
+
+  const loadFiltersFromURL = () => {
+    const search = searchParams.get('search') || '';
+    const category = searchParams.get('category')?.split(',').filter(Boolean) || [];
+    const country = searchParams.get('country')?.split(',').filter(Boolean) || [];
+    const vintage = searchParams.get('vintage')?.split(',').filter(Boolean) || [];
+    const assortment = searchParams.get('assortment')?.split(',').filter(Boolean) || [];
+    
+    const priceRange = searchParams.get('priceRange')?.split('-').map(Number) || [0, 75000];
+    const storageTimeRange = searchParams.get('storageTimeRange')?.split('-').map(Number) || [0, 30];
+    
+    const drinkingWindowStart = searchParams.get('drinkingStart') || '';
+    const drinkingWindowEnd = searchParams.get('drinkingEnd') || '';
+    
+    const projectedReturn1y = searchParams.get('return1y')?.split('-').map(Number) || [0, 100];
+    const projectedReturn3y = searchParams.get('return3y')?.split('-').map(Number) || [0, 300];
+    const projectedReturn5y = searchParams.get('return5y')?.split('-').map(Number) || [0, 500];
+    const projectedReturn10y = searchParams.get('return10y')?.split('-').map(Number) || [0, 1000];
+    
+    const urlFilters = {
+      category,
+      priceRange,
+      country,
+      vintage,
+      drinkingWindowStart,
+      drinkingWindowEnd,
+      assortment,
+      storageTimeRange,
+      projectedReturn1y,
+      projectedReturn3y,
+      projectedReturn5y,
+      projectedReturn10y
+    };
+    
+    setSearchQuery(search);
+    setAppliedSearchQuery(search);
+    setFilters(urlFilters);
+    setAppliedFilters(urlFilters);
+  };
+
+  // Load filters from URL on component mount
+  useEffect(() => {
+    loadFiltersFromURL();
+  }, []);
+
   const applyFilters = () => {
     setAppliedFilters({ ...filters });
     setAppliedSearchQuery(searchQuery);
     setShowSuggestions(false);
+    updateURLFromFilters(filters, searchQuery);
   };
 
   const clearFilters = () => {
@@ -342,6 +445,8 @@ const Index = () => {
     setSearchQuery("");
     setAppliedSearchQuery("");
     setShowSuggestions(false);
+    // Clear URL parameters
+    setSearchParams(new URLSearchParams());
   };
 
   const showHotInvestments = () => {
@@ -445,6 +550,8 @@ const Index = () => {
                   setFilters(showAllFilters);
                   setAppliedFilters(showAllFilters);
                   setShowSuggestions(false);
+                  // Clear URL parameters
+                  setSearchParams(new URLSearchParams());
                 }}
                 className="flex items-center gap-2"
               >
