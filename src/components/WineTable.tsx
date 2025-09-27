@@ -90,134 +90,135 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
   return (
     <Card>
       <CardContent className="p-0">
-        <Table className="table-fixed w-full">
-          <colgroup>
-            <col className="w-[4%]" />
-            <col className="w-[24%]" />
-            <col className="w-[10%]" />
-            <col className="w-[14%]" />
-            <col className="w-[8%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
-            <col className="w-[8%]" />
-            <col className="w-[8%]" />
-          </colgroup>
-          <TableHeader>
-            <TableRow>
-              <TableHead></TableHead>
-              <TableHead>
-                <Button 
-                  variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start w-full"
-                  onClick={() => handleSort('name')}
-                >
-                  Namn {getSortIcon('name')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button 
-                  variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start w-full"
-                  onClick={() => handleSort('country')}
-                >
-                  Land {getSortIcon('country')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button 
-                  variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start w-full"
-                  onClick={() => handleSort('region')}
-                >
-                  Region {getSortIcon('region')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button 
-                  variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start w-full"
-                  onClick={() => handleSort('vintage')}
-                >
-                  Årgång {getSortIcon('vintage')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button 
-                  variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start w-full"
-                  onClick={() => handleSort('category')}
-                >
-                  Kategori {getSortIcon('category')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button 
-                  variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start w-full"
-                  onClick={() => handleSort('assortment')}
-                >
-                  Sortiment {getSortIcon('assortment')}
-                </Button>
-              </TableHead>
-              <TableHead className="text-right">
-                <Button 
-                  variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-end w-full"
-                  onClick={() => handleSort('price')}
-                >
-                  Pris {getSortIcon('price')}
-                </Button>
-              </TableHead>
-              <TableHead className="text-right">
-                <Button 
-                  variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-end w-full"
-                  onClick={() => handleSort('investment_score')}
-                >
-                  Investering {getSortIcon('investment_score')}
-                </Button>
-              </TableHead>
-            </TableRow>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full table-fixed border-collapse">
+            <colgroup>
+              <col style={{ width: "40px" }} />
+              <col style={{ width: "200px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "120px" }} />
+              <col style={{ width: "80px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "120px" }} />
+              <col style={{ width: "80px" }} />
+              <col style={{ width: "100px" }} />
+            </colgroup>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="px-2"></TableHead>
+                <TableHead className="px-2">
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-start w-full"
+                    onClick={() => handleSort('name')}
+                  >
+                    Namn {getSortIcon('name')}
+                  </Button>
+                </TableHead>
+                <TableHead className="px-2">
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-start w-full"
+                    onClick={() => handleSort('country')}
+                  >
+                    Land {getSortIcon('country')}
+                  </Button>
+                </TableHead>
+                <TableHead className="px-2">
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-start w-full"
+                    onClick={() => handleSort('region')}
+                  >
+                    Region {getSortIcon('region')}
+                  </Button>
+                </TableHead>
+                <TableHead className="px-2">
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-start w-full"
+                    onClick={() => handleSort('vintage')}
+                  >
+                    Årgång {getSortIcon('vintage')}
+                  </Button>
+                </TableHead>
+                <TableHead className="px-2">
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-start w-full"
+                    onClick={() => handleSort('category')}
+                  >
+                    Kategori {getSortIcon('category')}
+                  </Button>
+                </TableHead>
+                <TableHead className="px-2">
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-start w-full"
+                    onClick={() => handleSort('assortment')}
+                  >
+                    Sortiment {getSortIcon('assortment')}
+                  </Button>
+                </TableHead>
+                <TableHead className="px-2 text-right">
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-end w-full"
+                    onClick={() => handleSort('price')}
+                  >
+                    Pris {getSortIcon('price')}
+                  </Button>
+                </TableHead>
+                <TableHead className="px-2 text-right">
+                  <Button 
+                    variant="ghost" 
+                    className="h-auto p-0 font-semibold justify-end w-full"
+                    onClick={() => handleSort('investment_score')}
+                  >
+                    Investering {getSortIcon('investment_score')}
+                  </Button>
+                </TableHead>
+              </TableRow>
           </TableHeader>
           <TableBody>
             {wines.map((wine) => (
               <Collapsible key={wine.id} open={expandedRows.has(wine.id)} onOpenChange={() => toggleRow(wine.id)}>
                 <CollapsibleTrigger asChild>
                   <TableRow className="cursor-pointer hover:bg-muted/50">
-                    <TableCell>
+                    <TableCell className="px-2">
                       {expandedRows.has(wine.id) ? (
                         <ChevronUp className="h-4 w-4" />
                       ) : (
                         <ChevronDown className="h-4 w-4" />
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium px-2">
                       <div>
                         <div className="font-semibold">{wine.name}</div>
                         <div className="text-sm text-muted-foreground">{wine.producer}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{wine.country || 'N/A'}</TableCell>
-                    <TableCell>{wine.region || 'N/A'}</TableCell>
-                    <TableCell>{wine.vintage || 'N/A'}</TableCell>
-                    <TableCell>
+                    <TableCell className="px-2">{wine.country || 'N/A'}</TableCell>
+                    <TableCell className="px-2">{wine.region || 'N/A'}</TableCell>
+                    <TableCell className="px-2">{wine.vintage || 'N/A'}</TableCell>
+                    <TableCell className="px-2">
                       {wine.category && (
                         <Badge variant="secondary" className="text-xs">
                           {wine.category}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-2">
                       {wine.assortment && (
                         <Badge variant={wine.assortment === 'Kommande lansering' ? 'default' : 'outline'} className="text-xs">
                           {wine.assortment}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
+                    <TableCell className="text-right font-semibold px-2">
                       {wine.price} kr
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right px-2">
                       {wine.investment_score && (
                         <div className="flex items-center justify-end gap-1">
                           <TrendingUp className="h-3 w-3 text-primary" />
@@ -312,8 +313,9 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                 </CollapsibleContent>
               </Collapsible>
             ))}
-          </TableBody>
-        </Table>
+            </TableBody>
+          </table>
+        </div>
       </CardContent>
     </Card>
   );
