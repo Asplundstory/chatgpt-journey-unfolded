@@ -151,7 +151,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
               <TableHead className="text-right">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-end"
+                  className="h-auto p-0 font-semibold justify-end flex items-center gap-1"
                   onClick={() => handleSort('price')}
                 >
                   Pris {getSortIcon('price')}
@@ -160,7 +160,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
               <TableHead className="text-right">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-end"
+                  className="h-auto p-0 font-semibold justify-end flex items-center gap-1"
                   onClick={() => handleSort('investment_score')}
                 >
                   Investering {getSortIcon('investment_score')}
