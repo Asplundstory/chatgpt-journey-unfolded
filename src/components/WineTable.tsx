@@ -234,28 +234,46 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                             <Plus className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover border z-50">
-                          {lists.length === 0 ? (
-                            <DropdownMenuItem 
-                              onClick={() => {
-                                const newList = createList("Mina favoriter", "Automatiskt skapad lista");
-                                addWineToList(newList.id, wine.id);
-                              }}
-                            >
-                              📝 Skapa första lista
-                            </DropdownMenuItem>
-                          ) : (
-                            lists.map((list) => (
-                              <DropdownMenuItem 
-                                key={list.id}
-                                onClick={() => addWineToList(list.id, wine.id)}
-                                disabled={list.wines.includes(wine.id)}
-                              >
-                                {list.wines.includes(wine.id) ? '✅ ' : '📝 '}{list.name}
-                              </DropdownMenuItem>
-                            ))
-                          )}
-                        </DropdownMenuContent>
+                         <DropdownMenuContent align="end" className="bg-popover border z-50">
+                           {lists.length === 0 ? (
+                             <DropdownMenuItem 
+                               onClick={async () => {
+                                 const newList = createList("Mina favoriter", "Automatiskt skapad lista");
+                                 // Give React a tick to update the state
+                                 setTimeout(() => {
+                                   addWineToList(newList.id, wine.id);
+                                 }, 0);
+                               }}
+                             >
+                               📝 Skapa första lista
+                             </DropdownMenuItem>
+                           ) : (
+                             <>
+                               {lists.map((list) => (
+                                 <DropdownMenuItem 
+                                   key={list.id}
+                                   onClick={() => addWineToList(list.id, wine.id)}
+                                   disabled={list.wines.includes(wine.id)}
+                                 >
+                                   {list.wines.includes(wine.id) ? '✅ ' : '📝 '}{list.name}
+                                 </DropdownMenuItem>
+                               ))}
+                               <DropdownMenuItem 
+                                 onClick={() => {
+                                   const listName = prompt("Ange namn på ny lista:");
+                                   if (listName) {
+                                     const newList = createList(listName, "Användardefinierad lista");
+                                     setTimeout(() => {
+                                       addWineToList(newList.id, wine.id);
+                                     }, 0);
+                                   }
+                                 }}
+                               >
+                                 ➕ Skapa ny lista
+                               </DropdownMenuItem>
+                             </>
+                           )}
+                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </div>
