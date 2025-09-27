@@ -15,7 +15,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     category: "",
-    priceRange: [0, 5000],
+    priceRange: [0, 75000],
     country: "",
     vintage: "",
     drinkingWindowStart: "",
@@ -29,7 +29,7 @@ const Index = () => {
   });
   const [appliedFilters, setAppliedFilters] = useState({
     category: "",
-    priceRange: [0, 5000],
+    priceRange: [0, 75000],
     country: "",
     vintage: "",
     drinkingWindowStart: "",
@@ -211,7 +211,7 @@ const Index = () => {
   const clearFilters = () => {
     const defaultFilters = {
       category: "",
-      priceRange: [0, 5000],
+      priceRange: [0, 75000],
       country: "",
       vintage: "",
       drinkingWindowStart: "",
@@ -316,7 +316,7 @@ const Index = () => {
                   setAppliedSearchQuery("");
                   const showAllFilters = {
                     category: "",
-                    priceRange: [0, 5000],
+                    priceRange: [0, 75000],
                     country: "",
                     vintage: "",
                     drinkingWindowStart: "",
@@ -384,13 +384,13 @@ const Index = () => {
                     <p>{systembolagetWines.length - filteredWines.length} viner filtrerade bort</p>
                   )}
                   {Object.entries(appliedFilters).some(([key, value]) => {
-                    if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 5000;
+                    if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 75000;
                     if (key.includes('Range')) return (value as number[])[0] > 0 || (value as number[])[1] < (key.includes('storage') ? 30 : 1000);
                     return value && value !== "";
                   }) && (
                     <p>
                       Aktiva filter: {Object.entries(appliedFilters).filter(([key, value]) => {
-                        if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 5000;
+                        if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 75000;
                         if (key.includes('Range')) return (value as number[])[0] > 0 || (value as number[])[1] < (key.includes('storage') ? 30 : 1000);
                         return value && value !== "";
                       }).length}

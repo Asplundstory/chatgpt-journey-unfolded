@@ -36,7 +36,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
   const clearFilters = () => {
     onFiltersChange({
       category: "",
-      priceRange: [0, 1000],
+      priceRange: [0, 75000],
       country: "",
       vintage: "",
       drinkingWindowStart: "",
@@ -198,13 +198,13 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
 
         {/* Price Range Slider */}
         <div className="space-y-3">
-          <Label>Prisintervall: {filters.priceRange[0]} → {filters.priceRange[1] >= 2000 ? `>${filters.priceRange[1]}` : filters.priceRange[1]} kr</Label>
+          <Label>Prisintervall: {filters.priceRange[0]} → {filters.priceRange[1] >= 75000 ? `>${filters.priceRange[1]}` : filters.priceRange[1]} kr</Label>
           <Slider
             value={filters.priceRange}
             onValueChange={(value) => updateFilter("priceRange", value)}
-            max={2000}
+            max={75000}
             min={0}
-            step={50}
+            step={500}
             className="w-full"
           />
         </div>
