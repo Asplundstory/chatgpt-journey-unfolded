@@ -94,73 +94,73 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
           <TableHeader>
             <TableRow>
               <TableHead className="w-8"></TableHead>
-              <TableHead>
+              <TableHead className="w-[200px]">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start"
+                  className="h-auto p-0 font-semibold justify-start w-full"
                   onClick={() => handleSort('name')}
                 >
                   Namn {getSortIcon('name')}
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[120px]">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start"
+                  className="h-auto p-0 font-semibold justify-start w-full"
                   onClick={() => handleSort('country')}
                 >
                   Land {getSortIcon('country')}
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[140px]">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start"
+                  className="h-auto p-0 font-semibold justify-start w-full"
                   onClick={() => handleSort('region')}
                 >
                   Region {getSortIcon('region')}
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[100px]">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start"
+                  className="h-auto p-0 font-semibold justify-start w-full"
                   onClick={() => handleSort('vintage')}
                 >
                   Årgång {getSortIcon('vintage')}
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[120px]">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start"
+                  className="h-auto p-0 font-semibold justify-start w-full"
                   onClick={() => handleSort('category')}
                 >
                   Kategori {getSortIcon('category')}
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[140px]">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-start"
+                  className="h-auto p-0 font-semibold justify-start w-full"
                   onClick={() => handleSort('assortment')}
                 >
                   Sortiment {getSortIcon('assortment')}
                 </Button>
               </TableHead>
-              <TableHead className="text-right">
+              <TableHead className="w-[100px] text-right">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-end flex items-center gap-1"
+                  className="h-auto p-0 font-semibold justify-end w-full"
                   onClick={() => handleSort('price')}
                 >
                   Pris {getSortIcon('price')}
                 </Button>
               </TableHead>
-              <TableHead className="text-right">
+              <TableHead className="w-[120px] text-right">
                 <Button 
                   variant="ghost" 
-                  className="h-auto p-0 font-semibold justify-end flex items-center gap-1"
+                  className="h-auto p-0 font-semibold justify-end w-full"
                   onClick={() => handleSort('investment_score')}
                 >
                   Investering {getSortIcon('investment_score')}
