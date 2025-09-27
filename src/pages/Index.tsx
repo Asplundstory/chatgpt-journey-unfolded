@@ -21,7 +21,10 @@ const Index = () => {
     drinkingWindowStart: "",
     drinkingWindowEnd: "",
     storageTimeRange: [0, 30],
-    investmentScore: [0, 10]
+    projectedReturn1y: [0, 100],
+    projectedReturn3y: [0, 300],
+    projectedReturn5y: [0, 500],
+    projectedReturn10y: [0, 1000]
   });
   const [appliedFilters, setAppliedFilters] = useState({
     category: "",
@@ -31,7 +34,10 @@ const Index = () => {
     drinkingWindowStart: "",
     drinkingWindowEnd: "",
     storageTimeRange: [0, 30],
-    investmentScore: [0, 10]
+    projectedReturn1y: [0, 100],
+    projectedReturn3y: [0, 300],
+    projectedReturn5y: [0, 500],
+    projectedReturn10y: [0, 1000]
   });
   const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -171,14 +177,27 @@ const Index = () => {
       const matchesStorageTime = storageTimeYears >= appliedFilters.storageTimeRange[0] && 
         storageTimeYears <= appliedFilters.storageTimeRange[1];
 
-      // Investment score filter
-      const matchesInvestmentScore = !wine.investment_score || 
-        (wine.investment_score >= appliedFilters.investmentScore[0] && 
-         wine.investment_score <= appliedFilters.investmentScore[1]);
+      // Projected return filters
+      const matchesReturn1y = !wine.projected_return_1y || 
+        (wine.projected_return_1y >= appliedFilters.projectedReturn1y[0] && 
+         wine.projected_return_1y <= appliedFilters.projectedReturn1y[1]);
+
+      const matchesReturn3y = !wine.projected_return_3y || 
+        (wine.projected_return_3y >= appliedFilters.projectedReturn3y[0] && 
+         wine.projected_return_3y <= appliedFilters.projectedReturn3y[1]);
+
+      const matchesReturn5y = !wine.projected_return_5y || 
+        (wine.projected_return_5y >= appliedFilters.projectedReturn5y[0] && 
+         wine.projected_return_5y <= appliedFilters.projectedReturn5y[1]);
+
+      const matchesReturn10y = !wine.projected_return_10y || 
+        (wine.projected_return_10y >= appliedFilters.projectedReturn10y[0] && 
+         wine.projected_return_10y <= appliedFilters.projectedReturn10y[1]);
 
       return matchesSearch && matchesCategory && matchesPrice && 
              matchesCountry && matchesVintage && matchesDrinkingStart && 
-             matchesDrinkingEnd && matchesStorageTime && matchesInvestmentScore;
+             matchesDrinkingEnd && matchesStorageTime && matchesReturn1y &&
+             matchesReturn3y && matchesReturn5y && matchesReturn10y;
     });
   }, [appliedSearchQuery, appliedFilters, systembolagetWines, showSuggestions]);
 
@@ -197,7 +216,10 @@ const Index = () => {
       drinkingWindowStart: "",
       drinkingWindowEnd: "",
       storageTimeRange: [0, 30],
-      investmentScore: [0, 10]
+      projectedReturn1y: [0, 100],
+      projectedReturn3y: [0, 300],
+      projectedReturn5y: [0, 500],
+      projectedReturn10y: [0, 1000]
     };
     setFilters(defaultFilters);
     setAppliedFilters(defaultFilters);

@@ -13,7 +13,10 @@ interface Filters {
   drinkingWindowStart: string;
   drinkingWindowEnd: string;
   storageTimeRange: number[];
-  investmentScore: number[];
+  projectedReturn1y: number[];
+  projectedReturn3y: number[];
+  projectedReturn5y: number[];
+  projectedReturn10y: number[];
 }
 
 interface WineFiltersProps {
@@ -38,7 +41,10 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
       drinkingWindowStart: "",
       drinkingWindowEnd: "",
       storageTimeRange: [0, 30],
-      investmentScore: [0, 10]
+      projectedReturn1y: [0, 100],
+      projectedReturn3y: [0, 300],
+      projectedReturn5y: [0, 500],
+      projectedReturn10y: [0, 1000]
     });
   };
 
@@ -194,15 +200,51 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
           />
         </div>
 
-        {/* Investment Score Slider */}
+        {/* Projected Return Sliders */}
         <div className="space-y-3">
-          <Label>Investeringsbetyg: {filters.investmentScore[0]} - {filters.investmentScore[1]}/10</Label>
+          <Label>Avkastning 1 år: {filters.projectedReturn1y[0]} - {filters.projectedReturn1y[1]}%</Label>
           <Slider
-            value={filters.investmentScore}
-            onValueChange={(value) => updateFilter("investmentScore", value)}
-            max={10}
+            value={filters.projectedReturn1y}
+            onValueChange={(value) => updateFilter("projectedReturn1y", value)}
+            max={100}
             min={0}
-            step={1}
+            step={5}
+            className="w-full"
+          />
+        </div>
+
+        <div className="space-y-3">
+          <Label>Avkastning 3 år: {filters.projectedReturn3y[0]} - {filters.projectedReturn3y[1]}%</Label>
+          <Slider
+            value={filters.projectedReturn3y}
+            onValueChange={(value) => updateFilter("projectedReturn3y", value)}
+            max={300}
+            min={0}
+            step={10}
+            className="w-full"
+          />
+        </div>
+
+        <div className="space-y-3">
+          <Label>Avkastning 5 år: {filters.projectedReturn5y[0]} - {filters.projectedReturn5y[1]}%</Label>
+          <Slider
+            value={filters.projectedReturn5y}
+            onValueChange={(value) => updateFilter("projectedReturn5y", value)}
+            max={500}
+            min={0}
+            step={25}
+            className="w-full"
+          />
+        </div>
+
+        <div className="space-y-3">
+          <Label>Avkastning 10 år: {filters.projectedReturn10y[0]} - {filters.projectedReturn10y[1]}%</Label>
+          <Slider
+            value={filters.projectedReturn10y}
+            onValueChange={(value) => updateFilter("projectedReturn10y", value)}
+            max={1000}
+            min={0}
+            step={50}
             className="w-full"
           />
         </div>
