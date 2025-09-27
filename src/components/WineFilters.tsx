@@ -3,16 +3,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { X } from "lucide-react";
 
 interface Filters {
-  category: string;
+  category: string[];
   priceRange: number[];
-  country: string;
-  vintage: string;
+  country: string[];
+  vintage: string[];
   drinkingWindowStart: string;
   drinkingWindowEnd: string;
-  assortment: string;
+  assortment: string[];
   storageTimeRange: number[];
   projectedReturn1y: number[];
   projectedReturn3y: number[];
@@ -35,13 +36,13 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
 
   const clearFilters = () => {
     onFiltersChange({
-      category: "",
+      category: [],
       priceRange: [0, 75000],
-      country: "",
-      vintage: "",
+      country: [],
+      vintage: [],
       drinkingWindowStart: "",
       drinkingWindowEnd: "",
-      assortment: "",
+      assortment: [],
       storageTimeRange: [0, 30],
       projectedReturn1y: [0, 100],
       projectedReturn3y: [0, 300],
@@ -66,91 +67,84 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Assortment Filter - Above all other filters */}
+        {/* Assortment Filter - Multi-select */}
         <div className="space-y-2">
           <Label htmlFor="assortment">Sortiment</Label>
-          <Select
+          <MultiSelect
+            options={[
+              { value: "Beställningssortiment", label: "Beställningssortiment" },
+              { value: "Tillfälligt sortiment", label: "Tillfälligt sortiment" },
+              { value: "Ordinarie sortiment", label: "Ordinarie sortiment" },
+              { value: "Lokalproducerat", label: "Lokalproducerat" },
+              { value: "Presentförpackning", label: "Presentförpackning" },
+            ]}
             value={filters.assortment}
-            onValueChange={(value) => updateFilter("assortment", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Alla sortiment" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover z-50">
-              <SelectItem value="Beställningssortiment">Beställningssortiment</SelectItem>
-              <SelectItem value="Tillfälligt sortiment">Tillfälligt sortiment</SelectItem>
-              <SelectItem value="Ordinarie sortiment">Ordinarie sortiment</SelectItem>
-              <SelectItem value="Lokalproducerat">Lokalproducerat</SelectItem>
-              <SelectItem value="Presentförpackning">Presentförpackning</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={(value) => updateFilter("assortment", value)}
+            placeholder="Alla sortiment"
+          />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-          {/* Category Filter */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* Category Filter - Multi-select */}
           <div className="space-y-2">
             <Label htmlFor="category">Kategori</Label>
-            <Select
+            <MultiSelect
+              options={[
+                { value: "rött vin", label: "Rött vin" },
+                { value: "vitt vin", label: "Vitt vin" },
+                { value: "rosé", label: "Rosé" },
+                { value: "mousserande", label: "Mousserande" },
+                { value: "starkvin", label: "Starkvin" },
+              ]}
               value={filters.category}
-              onValueChange={(value) => updateFilter("category", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Alla kategorier" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                <SelectItem value="rött vin">Rött vin</SelectItem>
-                <SelectItem value="vitt vin">Vitt vin</SelectItem>
-                <SelectItem value="rosé">Rosé</SelectItem>
-                <SelectItem value="mousserande">Mousserande</SelectItem>
-                <SelectItem value="starkvin">Starkvin</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={(value) => updateFilter("category", value)}
+              placeholder="Alla kategorier"
+            />
           </div>
 
-          {/* Country Filter */}
+          {/* Country Filter - Multi-select */}
           <div className="space-y-2">
             <Label htmlFor="country">Land</Label>
-            <Select
+            <MultiSelect
+              options={[
+                { value: "frankrike", label: "Frankrike" },
+                { value: "italien", label: "Italien" },
+                { value: "spanien", label: "Spanien" },
+                { value: "tyskland", label: "Tyskland" },
+                { value: "sverige", label: "Sverige" },
+                { value: "chile", label: "Chile" },
+                { value: "australien", label: "Australien" },
+                { value: "usa", label: "USA" },
+                { value: "argentina", label: "Argentina" },
+                { value: "portugal", label: "Portugal" },
+              ]}
               value={filters.country}
-              onValueChange={(value) => updateFilter("country", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Alla länder" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                <SelectItem value="frankrike">Frankrike</SelectItem>
-                <SelectItem value="italien">Italien</SelectItem>
-                <SelectItem value="spanien">Spanien</SelectItem>
-                <SelectItem value="tyskland">Tyskland</SelectItem>
-                <SelectItem value="sverige">Sverige</SelectItem>
-                <SelectItem value="chile">Chile</SelectItem>
-                <SelectItem value="australien">Australien</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={(value) => updateFilter("country", value)}
+              placeholder="Alla länder"
+            />
           </div>
 
-          {/* Vintage Filter */}
+          {/* Vintage Filter - Multi-select */}
           <div className="space-y-2">
             <Label htmlFor="vintage">Årgång</Label>
-            <Select
+            <MultiSelect
+              options={[
+                { value: "2023", label: "2023" },
+                { value: "2022", label: "2022" },
+                { value: "2021", label: "2021" },
+                { value: "2020", label: "2020" },
+                { value: "2019", label: "2019" },
+                { value: "2018", label: "2018" },
+                { value: "2017", label: "2017" },
+                { value: "2016", label: "2016" },
+                { value: "2015", label: "2015" },
+                { value: "2014", label: "2014" },
+                { value: "2013", label: "2013" },
+              ]}
               value={filters.vintage}
-              onValueChange={(value) => updateFilter("vintage", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Alla årgångar" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                <SelectItem value="2023">2023</SelectItem>
-                <SelectItem value="2022">2022</SelectItem>
-                <SelectItem value="2021">2021</SelectItem>
-                <SelectItem value="2020">2020</SelectItem>
-                <SelectItem value="2019">2019</SelectItem>
-                <SelectItem value="2018">2018</SelectItem>
-                <SelectItem value="2017">2017</SelectItem>
-                <SelectItem value="2016">2016</SelectItem>
-                <SelectItem value="2015">2015</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={(value) => updateFilter("vintage", value)}
+              placeholder="Alla årgångar"
+            />
           </div>
 
           {/* Drinking Window Start */}

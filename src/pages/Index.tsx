@@ -25,13 +25,13 @@ const Index = () => {
   const { exportToCSV, exportToJSON } = useWineExport();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
-    category: "",
+    category: [] as string[],
     priceRange: [0, 75000],
-    country: "",
-    vintage: "",
+    country: [] as string[],
+    vintage: [] as string[],
     drinkingWindowStart: "",
     drinkingWindowEnd: "",
-    assortment: "",
+    assortment: [] as string[],
     storageTimeRange: [0, 30],
     projectedReturn1y: [0, 100],
     projectedReturn3y: [0, 300],
@@ -39,13 +39,13 @@ const Index = () => {
     projectedReturn10y: [0, 1000]
   });
   const [appliedFilters, setAppliedFilters] = useState({
-    category: "",
+    category: [] as string[],
     priceRange: [0, 75000],
-    country: "",
-    vintage: "",
+    country: [] as string[],
+    vintage: [] as string[],
     drinkingWindowStart: "",
     drinkingWindowEnd: "",
-    assortment: "",
+    assortment: [] as string[],
     storageTimeRange: [0, 30],
     projectedReturn1y: [0, 100],
     projectedReturn3y: [0, 300],
@@ -168,9 +168,11 @@ const Index = () => {
         wine.country?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
         wine.region?.toLowerCase().includes(appliedSearchQuery.toLowerCase());
 
-      // Category filter - improved null handling
-      const matchesCategory = !appliedFilters.category || 
-        wine.category?.toLowerCase().includes(appliedFilters.category.toLowerCase());
+      // Category filter - improved to handle arrays
+      const matchesCategory = appliedFilters.category.length === 0 || 
+        appliedFilters.category.some(cat => 
+          wine.category?.toLowerCase().includes(cat.toLowerCase())
+        );
 
       // Price filter - handle "greater than" when at max value
       const winePrice = wine.price || 0;
@@ -178,13 +180,17 @@ const Index = () => {
       const matchesPrice = winePrice >= appliedFilters.priceRange[0] && 
         (appliedFilters.priceRange[1] >= priceMaxValue ? true : winePrice <= appliedFilters.priceRange[1]);
 
-      // Country filter
-      const matchesCountry = !appliedFilters.country || 
-        wine.country?.toLowerCase().includes(appliedFilters.country.toLowerCase());
+      // Country filter - improved to handle arrays
+      const matchesCountry = appliedFilters.country.length === 0 || 
+        appliedFilters.country.some(country => 
+          wine.country?.toLowerCase().includes(country.toLowerCase())
+        );
 
-      // Vintage filter
-      const matchesVintage = !appliedFilters.vintage || 
-        wine.vintage?.toString() === appliedFilters.vintage;
+      // Vintage filter - improved to handle arrays
+      const matchesVintage = appliedFilters.vintage.length === 0 || 
+        appliedFilters.vintage.some(vintage => 
+          wine.vintage?.toString() === vintage
+        );
 
       // Drinking window filters - improved null handling
       const matchesDrinkingStart = !appliedFilters.drinkingWindowStart || 
@@ -199,9 +205,11 @@ const Index = () => {
       const matchesStorageTime = storageTimeYears >= appliedFilters.storageTimeRange[0] && 
         (appliedFilters.storageTimeRange[1] >= storageMaxValue ? true : storageTimeYears <= appliedFilters.storageTimeRange[1]);
 
-      // Assortment filter - fixed logic to not exclude wines with missing assortment
-      const matchesAssortment = !appliedFilters.assortment || 
-        (wine.assortment && wine.assortment.toLowerCase().includes(appliedFilters.assortment.toLowerCase()));
+      // Assortment filter - improved to handle arrays
+      const matchesAssortment = appliedFilters.assortment.length === 0 || 
+        appliedFilters.assortment.some(assort => 
+          wine.assortment?.toLowerCase().includes(assort.toLowerCase())
+        );
 
       // Projected return filters - handle "greater than" when at max values
       const return1yMaxValue = 100;
@@ -316,13 +324,13 @@ const Index = () => {
 
   const clearFilters = () => {
     const defaultFilters = {
-      category: "",
+      category: [] as string[],
       priceRange: [0, 75000],
-      country: "",
-      vintage: "",
+      country: [] as string[],
+      vintage: [] as string[],
       drinkingWindowStart: "",
       drinkingWindowEnd: "",
-      assortment: "",
+      assortment: [] as string[],
       storageTimeRange: [0, 30],
       projectedReturn1y: [0, 100],
       projectedReturn3y: [0, 300],
@@ -421,13 +429,13 @@ const Index = () => {
                   setSearchQuery("");
                   setAppliedSearchQuery("");
                   const showAllFilters = {
-                    category: "",
+                    category: [] as string[],
                     priceRange: [0, 75000],
-                    country: "",
-                    vintage: "",
+                    country: [] as string[],
+                    vintage: [] as string[],
                     drinkingWindowStart: "",
                     drinkingWindowEnd: "",
-                    assortment: "",
+                    assortment: [] as string[],
                     storageTimeRange: [0, 30],
                     projectedReturn1y: [0, 100],
                     projectedReturn3y: [0, 300],
