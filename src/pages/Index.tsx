@@ -28,7 +28,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     category: [] as string[],
-    priceRange: [0, 75000],
+    priceRange: [0, 10000],
     country: [] as string[],
     vintage: [] as string[],
     drinkingWindowStart: "",
@@ -42,7 +42,7 @@ const Index = () => {
   });
   const [appliedFilters, setAppliedFilters] = useState({
     category: [] as string[],
-    priceRange: [0, 75000],
+    priceRange: [0, 10000],
     country: [] as string[],
     vintage: [] as string[],
     drinkingWindowStart: "",
@@ -178,7 +178,7 @@ const Index = () => {
 
       // Price filter - handle "greater than" when at max value
       const winePrice = wine.price || 0;
-      const priceMaxValue = 75000;
+      const priceMaxValue = 10000;
       const matchesPrice = winePrice >= appliedFilters.priceRange[0] && 
         (appliedFilters.priceRange[1] >= priceMaxValue ? true : winePrice <= appliedFilters.priceRange[1]);
 
@@ -342,7 +342,7 @@ const Index = () => {
     }
     
     // Add range filters if not default values
-    if (filtersToSync.priceRange[0] !== 0 || filtersToSync.priceRange[1] !== 75000) {
+    if (filtersToSync.priceRange[0] !== 0 || filtersToSync.priceRange[1] !== 10000) {
       params.set('priceRange', `${filtersToSync.priceRange[0]}-${filtersToSync.priceRange[1]}`);
     }
     if (filtersToSync.storageTimeRange[0] !== 0 || filtersToSync.storageTimeRange[1] !== 30) {
@@ -381,7 +381,7 @@ const Index = () => {
     const vintage = searchParams.get('vintage')?.split(',').filter(Boolean) || [];
     const assortment = searchParams.get('assortment')?.split(',').filter(Boolean) || [];
     
-    const priceRange = searchParams.get('priceRange')?.split('-').map(Number) || [0, 75000];
+    const priceRange = searchParams.get('priceRange')?.split('-').map(Number) || [0, 10000];
     const storageTimeRange = searchParams.get('storageTimeRange')?.split('-').map(Number) || [0, 30];
     
     const drinkingWindowStart = searchParams.get('drinkingStart') || '';
@@ -428,7 +428,7 @@ const Index = () => {
   const clearFilters = () => {
     const defaultFilters = {
       category: [] as string[],
-      priceRange: [0, 75000],
+      priceRange: [0, 10000],
       country: [] as string[],
       vintage: [] as string[],
       drinkingWindowStart: "",
@@ -535,7 +535,7 @@ const Index = () => {
                   setAppliedSearchQuery("");
                   const showAllFilters = {
                     category: [] as string[],
-                    priceRange: [0, 75000],
+                    priceRange: [0, 10000],
                     country: [] as string[],
                     vintage: [] as string[],
                     drinkingWindowStart: "",
