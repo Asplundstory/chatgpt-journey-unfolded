@@ -153,10 +153,11 @@ const Index = () => {
       const matchesCategory = !appliedFilters.category || 
         wine.category?.toLowerCase().includes(appliedFilters.category.toLowerCase());
 
-      // Price filter
+      // Price filter - handle "greater than" when at max value
       const winePrice = wine.price || 0;
+      const priceMaxValue = 75000;
       const matchesPrice = winePrice >= appliedFilters.priceRange[0] && 
-        winePrice <= appliedFilters.priceRange[1];
+        (appliedFilters.priceRange[1] >= priceMaxValue ? true : winePrice <= appliedFilters.priceRange[1]);
 
       // Country filter
       const matchesCountry = !appliedFilters.country || 
@@ -173,27 +174,37 @@ const Index = () => {
       const matchesDrinkingEnd = !appliedFilters.drinkingWindowEnd || 
         (wine.drinking_window_end && wine.drinking_window_end <= parseInt(appliedFilters.drinkingWindowEnd.replace('+', '')));
 
-      // Storage time filter - improved null handling
+      // Storage time filter - handle "greater than" when at max value
       const storageTimeYears = wine.storage_time_months ? wine.storage_time_months / 12 : 0;
+      const storageMaxValue = 30;
       const matchesStorageTime = storageTimeYears >= appliedFilters.storageTimeRange[0] && 
-        storageTimeYears <= appliedFilters.storageTimeRange[1];
+        (appliedFilters.storageTimeRange[1] >= storageMaxValue ? true : storageTimeYears <= appliedFilters.storageTimeRange[1]);
 
       // Assortment filter - fixed logic to not exclude wines with missing assortment
       const matchesAssortment = !appliedFilters.assortment || 
         (wine.assortment && wine.assortment.toLowerCase().includes(appliedFilters.assortment.toLowerCase()));
 
-      // Projected return filters - fixed to use minimum values instead of ranges
+      // Projected return filters - handle "greater than" when at max values
+      const return1yMaxValue = 100;
+      const return3yMaxValue = 300;
+      const return5yMaxValue = 500;
+      const return10yMaxValue = 1000;
+
       const matchesReturn1y = appliedFilters.projectedReturn1y[0] === 0 || 
-        (wine.projected_return_1y && wine.projected_return_1y >= appliedFilters.projectedReturn1y[0]);
+        (wine.projected_return_1y && wine.projected_return_1y >= appliedFilters.projectedReturn1y[0] &&
+         (appliedFilters.projectedReturn1y[1] >= return1yMaxValue ? true : wine.projected_return_1y <= appliedFilters.projectedReturn1y[1]));
 
       const matchesReturn3y = appliedFilters.projectedReturn3y[0] === 0 || 
-        (wine.projected_return_3y && wine.projected_return_3y >= appliedFilters.projectedReturn3y[0]);
+        (wine.projected_return_3y && wine.projected_return_3y >= appliedFilters.projectedReturn3y[0] &&
+         (appliedFilters.projectedReturn3y[1] >= return3yMaxValue ? true : wine.projected_return_3y <= appliedFilters.projectedReturn3y[1]));
 
       const matchesReturn5y = appliedFilters.projectedReturn5y[0] === 0 || 
-        (wine.projected_return_5y && wine.projected_return_5y >= appliedFilters.projectedReturn5y[0]);
+        (wine.projected_return_5y && wine.projected_return_5y >= appliedFilters.projectedReturn5y[0] &&
+         (appliedFilters.projectedReturn5y[1] >= return5yMaxValue ? true : wine.projected_return_5y <= appliedFilters.projectedReturn5y[1]));
 
       const matchesReturn10y = appliedFilters.projectedReturn10y[0] === 0 || 
-        (wine.projected_return_10y && wine.projected_return_10y >= appliedFilters.projectedReturn10y[0]);
+        (wine.projected_return_10y && wine.projected_return_10y >= appliedFilters.projectedReturn10y[0] &&
+         (appliedFilters.projectedReturn10y[1] >= return10yMaxValue ? true : wine.projected_return_10y <= appliedFilters.projectedReturn10y[1]));
 
       return matchesSearch && matchesCategory && matchesPrice && 
              matchesCountry && matchesVintage && matchesDrinkingStart && 
