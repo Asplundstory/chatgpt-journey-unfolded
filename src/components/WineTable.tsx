@@ -93,8 +93,8 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
         <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-8"></TableHead>
-              <TableHead className="w-[200px]">
+              <TableHead className="w-12"></TableHead>
+              <TableHead className="w-48">
                 <Button 
                   variant="ghost" 
                   className="h-auto p-0 font-semibold justify-start w-full"
@@ -103,7 +103,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                   Namn {getSortIcon('name')}
                 </Button>
               </TableHead>
-              <TableHead className="w-[120px]">
+              <TableHead className="w-28">
                 <Button 
                   variant="ghost" 
                   className="h-auto p-0 font-semibold justify-start w-full"
@@ -112,7 +112,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                   Land {getSortIcon('country')}
                 </Button>
               </TableHead>
-              <TableHead className="w-[140px]">
+              <TableHead className="w-32">
                 <Button 
                   variant="ghost" 
                   className="h-auto p-0 font-semibold justify-start w-full"
@@ -121,7 +121,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                   Region {getSortIcon('region')}
                 </Button>
               </TableHead>
-              <TableHead className="w-[100px]">
+              <TableHead className="w-24">
                 <Button 
                   variant="ghost" 
                   className="h-auto p-0 font-semibold justify-start w-full"
@@ -130,7 +130,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                   Årgång {getSortIcon('vintage')}
                 </Button>
               </TableHead>
-              <TableHead className="w-[120px]">
+              <TableHead className="w-28">
                 <Button 
                   variant="ghost" 
                   className="h-auto p-0 font-semibold justify-start w-full"
@@ -139,7 +139,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                   Kategori {getSortIcon('category')}
                 </Button>
               </TableHead>
-              <TableHead className="w-[140px]">
+              <TableHead className="w-32">
                 <Button 
                   variant="ghost" 
                   className="h-auto p-0 font-semibold justify-start w-full"
@@ -148,7 +148,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                   Sortiment {getSortIcon('assortment')}
                 </Button>
               </TableHead>
-              <TableHead className="w-[100px] text-right">
+              <TableHead className="w-24 text-right">
                 <Button 
                   variant="ghost" 
                   className="h-auto p-0 font-semibold justify-end w-full"
@@ -157,7 +157,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                   Pris {getSortIcon('price')}
                 </Button>
               </TableHead>
-              <TableHead className="w-[120px] text-right">
+              <TableHead className="w-32 text-right">
                 <Button 
                   variant="ghost" 
                   className="h-auto p-0 font-semibold justify-end w-full"
@@ -173,40 +173,40 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
               <Collapsible key={wine.id} open={expandedRows.has(wine.id)} onOpenChange={() => toggleRow(wine.id)}>
                 <CollapsibleTrigger asChild>
                   <TableRow className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="w-8">
+                    <TableCell className="w-12">
                       {expandedRows.has(wine.id) ? (
                         <ChevronUp className="h-4 w-4" />
                       ) : (
                         <ChevronDown className="h-4 w-4" />
                       )}
                     </TableCell>
-                    <TableCell className="font-medium w-[200px]">
+                    <TableCell className="font-medium w-48">
                       <div>
                         <div className="font-semibold">{wine.name}</div>
                         <div className="text-sm text-muted-foreground">{wine.producer}</div>
                       </div>
                     </TableCell>
-                    <TableCell className="w-[120px]">{wine.country || 'N/A'}</TableCell>
-                    <TableCell className="w-[140px]">{wine.region || 'N/A'}</TableCell>
-                    <TableCell className="w-[100px]">{wine.vintage || 'N/A'}</TableCell>
-                    <TableCell className="w-[120px]">
+                    <TableCell className="w-28">{wine.country || 'N/A'}</TableCell>
+                    <TableCell className="w-32">{wine.region || 'N/A'}</TableCell>
+                    <TableCell className="w-24">{wine.vintage || 'N/A'}</TableCell>
+                    <TableCell className="w-28">
                       {wine.category && (
                         <Badge variant="secondary" className="text-xs">
                           {wine.category}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="w-[140px]">
+                    <TableCell className="w-32">
                       {wine.assortment && (
                         <Badge variant={wine.assortment === 'Kommande lansering' ? 'default' : 'outline'} className="text-xs">
                           {wine.assortment}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-semibold w-[100px]">
+                    <TableCell className="text-right font-semibold w-24">
                       {wine.price} kr
                     </TableCell>
-                    <TableCell className="text-right w-[120px]">
+                    <TableCell className="text-right w-32">
                       {wine.investment_score && (
                         <div className="flex items-center justify-end gap-1">
                           <TrendingUp className="h-3 w-3 text-primary" />
