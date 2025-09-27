@@ -1,144 +1,52 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useDebounce } from "use-debounce";
 import { Search, Wine, Filter, RotateCcw, TrendingUp, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from "@/components/ui/pagination";
-import { WineTable, SortField, SortDirection } from "@/components/WineTable";
+import { VirtualizedWineTable, SortField, SortDirection } from "@/components/VirtualizedWineTable";
 import { WineFilters } from "@/components/WineFilters";
 import { WineRecommendations } from "@/components/WineRecommendations";
 import { WineListManager } from "@/components/WineListManager";
 import { useWines } from "@/hooks/useWines";
 import { useWineExport } from "@/hooks/useWineExport";
 import { SystembolagetSyncButton } from "@/components/SystembolagetSyncButton";
+import { useFilterStore } from "@/stores/filterStore";
 
 const Index = () => {
   const { wines: systembolagetWines, loading, error, refetch } = useWines();
   const { exportToCSV, exportToJSON } = useWineExport();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState({
-    category: [] as string[],
-    priceRange: [0, 10000],
-    country: [] as string[],
-    vintage: [] as string[],
-    drinkingWindowStart: "",
-    drinkingWindowEnd: "",
-    assortment: [] as string[],
-    storageTimeRange: [0, 30],
-    projectedReturn1y: [0, 100],
-    projectedReturn3y: [0, 300],
-    projectedReturn5y: [0, 500],
-    projectedReturn10y: [0, 1000]
-  });
-  const [appliedFilters, setAppliedFilters] = useState({
-    category: [] as string[],
-    priceRange: [0, 10000],
-    country: [] as string[],
-    vintage: [] as string[],
-    drinkingWindowStart: "",
-    drinkingWindowEnd: "",
-    assortment: [] as string[],
-    storageTimeRange: [0, 30],
-    projectedReturn1y: [0, 100],
-    projectedReturn3y: [0, 300],
-    projectedReturn5y: [0, 500],
-    projectedReturn10y: [0, 1000]
-  });
-  const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
   
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(100);
-  
-  // Sorting state
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  // Zustand store for filters and state management
+  const {
+    searchQuery,
+    filters,
+    appliedFilters,
+    appliedSearchQuery,
+    showSuggestions,
+    currentPage,
+    itemsPerPage,
+    sortField,
+    sortDirection,
+    setSearchQuery,
+    setFilters,
+    setAppliedFilters,
+    setAppliedSearchQuery,
+    setShowSuggestions,
+    setCurrentPage,
+    setSorting,
+    applyFilters: storeApplyFilters,
+    clearFilters: storeClearFilters,
+    resetPagination
+  } = useFilterStore();
 
-  // Mock wine data - will be replaced with Systembolaget API data
-  const mockWines = [
-    {
-      id: 1,
-      name: "Château Margaux 2015",
-      producer: "Château Margaux",
-      category: "Rött vin",
-      price: 4500,
-      alcoholContent: 13.5,
-      country: "Frankrike",
-      region: "Bordeaux",
-      vintage: 2015,
-      description: "Ett exceptionellt rött vin från Bordeaux med komplex smak av svarta bär och kryddor.",
-      image: "/placeholder.svg",
-      drinkingWindow: { start: 2025, end: 2045 },
-      storageTime: 25,
-      investmentScore: 9,
-      valueAppreciation: 12.5,
-      projectedReturns: {
-        oneYear: 8.5,
-        threeYears: 22.0,
-        fiveYears: 45.5,
-        tenYears: 125.0
-      }
-    },
-    {
-      id: 2,
-      name: "Sancerre Les Monts Damnés",
-      producer: "Henri Bourgeois",
-      category: "Vitt vin",
-      price: 250,
-      alcoholContent: 12.5,
-      country: "Frankrike",
-      region: "Loire",
-      vintage: 2022,
-      description: "Elegant Sauvignon Blanc med mineraler och citrusnoter.",
-      image: "/placeholder.svg",
-      drinkingWindow: { start: 2024, end: 2028 },
-      storageTime: 6,
-      investmentScore: 6,
-      valueAppreciation: 3.2,
-      projectedReturns: {
-        oneYear: 2.1,
-        threeYears: 8.5,
-        fiveYears: 15.2,
-        tenYears: 28.0
-      }
-    },
-    {
-      id: 3,
-      name: "Barolo DOCG 2018",
-      producer: "Giuseppe Rinaldi",
-      category: "Rött vin",
-      price: 680,
-      alcoholContent: 14.0,
-      country: "Italien",
-      region: "Piemonte",
-      vintage: 2018,
-      description: "Kraftfullt rött vin med toner av körsbär, rosor och tryffel.",
-      image: "/placeholder.svg",
-      drinkingWindow: { start: 2026, end: 2038 },
-      storageTime: 15,
-      investmentScore: 8,
-      valueAppreciation: 8.7,
-      projectedReturns: {
-        oneYear: 5.2,
-        threeYears: 18.8,
-        fiveYears: 35.0,
-        tenYears: 78.5
-      }
-    }
-  ];
+  // Debounced search query
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
 
-  // Filtered wines based on applied search and filters
+  // Use debounced search query for filtering  
   const filteredWines = useMemo(() => {
     let wines = systembolagetWines;
 
@@ -163,12 +71,13 @@ const Index = () => {
     }
 
     return wines.filter(wine => {
-      // Search filter
-      const matchesSearch = !appliedSearchQuery || 
-        wine.name?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
-        wine.producer?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
-        wine.country?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
-        wine.region?.toLowerCase().includes(appliedSearchQuery.toLowerCase());
+      // Search filter using debounced search query
+      const searchToUse = appliedSearchQuery || debouncedSearchQuery;
+      const matchesSearch = !searchToUse || 
+        wine.name?.toLowerCase().includes(searchToUse.toLowerCase()) ||
+        wine.producer?.toLowerCase().includes(searchToUse.toLowerCase()) ||
+        wine.country?.toLowerCase().includes(searchToUse.toLowerCase()) ||
+        wine.region?.toLowerCase().includes(searchToUse.toLowerCase());
 
       // Category filter - improved to handle arrays
       const matchesCategory = appliedFilters.category.length === 0 || 
@@ -240,7 +149,7 @@ const Index = () => {
              matchesDrinkingEnd && matchesStorageTime && matchesAssortment &&
              matchesReturn1y && matchesReturn3y && matchesReturn5y && matchesReturn10y;
     });
-  }, [appliedSearchQuery, appliedFilters, systembolagetWines, showSuggestions]);
+  }, [appliedSearchQuery, debouncedSearchQuery, appliedFilters, systembolagetWines, showSuggestions]);
 
   // Sorted wines
   const sortedWines = useMemo(() => {
@@ -303,19 +212,8 @@ const Index = () => {
     });
   }, [filteredWines, sortField, sortDirection]);
 
-  // Paginated wines
-  const paginatedWines = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return sortedWines.slice(startIndex, endIndex);
-  }, [sortedWines, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(sortedWines.length / itemsPerPage);
-
   const handleSort = (field: SortField, direction: SortDirection) => {
-    setSortField(field);
-    setSortDirection(direction);
-    setCurrentPage(1); // Reset to first page when sorting
+    setSorting(field, direction);
   };
 
   // URL synchronization functions
@@ -381,16 +279,16 @@ const Index = () => {
     const vintage = searchParams.get('vintage')?.split(',').filter(Boolean) || [];
     const assortment = searchParams.get('assortment')?.split(',').filter(Boolean) || [];
     
-    const priceRange = searchParams.get('priceRange')?.split('-').map(Number) || [0, 10000];
-    const storageTimeRange = searchParams.get('storageTimeRange')?.split('-').map(Number) || [0, 30];
+    const priceRange: [number, number] = searchParams.get('priceRange')?.split('-').map(Number) as [number, number] || [0, 10000];
+    const storageTimeRange: [number, number] = searchParams.get('storageTimeRange')?.split('-').map(Number) as [number, number] || [0, 30];
     
     const drinkingWindowStart = searchParams.get('drinkingStart') || '';
     const drinkingWindowEnd = searchParams.get('drinkingEnd') || '';
     
-    const projectedReturn1y = searchParams.get('return1y')?.split('-').map(Number) || [0, 100];
-    const projectedReturn3y = searchParams.get('return3y')?.split('-').map(Number) || [0, 300];
-    const projectedReturn5y = searchParams.get('return5y')?.split('-').map(Number) || [0, 500];
-    const projectedReturn10y = searchParams.get('return10y')?.split('-').map(Number) || [0, 1000];
+    const projectedReturn1y: [number, number] = searchParams.get('return1y')?.split('-').map(Number) as [number, number] || [0, 100];
+    const projectedReturn3y: [number, number] = searchParams.get('return3y')?.split('-').map(Number) as [number, number] || [0, 300];
+    const projectedReturn5y: [number, number] = searchParams.get('return5y')?.split('-').map(Number) as [number, number] || [0, 500];
+    const projectedReturn10y: [number, number] = searchParams.get('return10y')?.split('-').map(Number) as [number, number] || [0, 1000];
     
     const urlFilters = {
       category,
@@ -418,37 +316,6 @@ const Index = () => {
     loadFiltersFromURL();
   }, []);
 
-  const applyFilters = () => {
-    setAppliedFilters({ ...filters });
-    setAppliedSearchQuery(searchQuery);
-    setShowSuggestions(false);
-    updateURLFromFilters(filters, searchQuery);
-  };
-
-  const clearFilters = () => {
-    const defaultFilters = {
-      category: [] as string[],
-      priceRange: [0, 10000],
-      country: [] as string[],
-      vintage: [] as string[],
-      drinkingWindowStart: "",
-      drinkingWindowEnd: "",
-      assortment: [] as string[],
-      storageTimeRange: [0, 30],
-      projectedReturn1y: [0, 100],
-      projectedReturn3y: [0, 300],
-      projectedReturn5y: [0, 500],
-      projectedReturn10y: [0, 1000]
-    };
-    setFilters(defaultFilters);
-    setAppliedFilters(defaultFilters);
-    setSearchQuery("");
-    setAppliedSearchQuery("");
-    setShowSuggestions(false);
-    // Clear URL parameters
-    setSearchParams(new URLSearchParams());
-  };
-
   const showHotInvestments = () => {
     // Check if we have wines with investment data
     const winesWithInvestmentData = systembolagetWines.filter(wine => 
@@ -456,7 +323,6 @@ const Index = () => {
     );
     
     if (winesWithInvestmentData.length === 0) {
-      // Show a toast or alert that no investment data is available
       alert('Inga viner med investeringsdata tillgängliga. Kör synkronisering för att hämta data.');
       return;
     }
@@ -512,7 +378,7 @@ const Index = () => {
             {/* Filter Control Buttons */}
             <div className="flex flex-wrap gap-3 pt-4 border-t">
               <Button 
-                onClick={applyFilters}
+                onClick={storeApplyFilters}
                 className="flex items-center gap-2"
               >
                 <Filter className="h-4 w-4" />
@@ -521,7 +387,7 @@ const Index = () => {
               
               <Button 
                 variant="outline" 
-                onClick={clearFilters}
+                onClick={storeClearFilters}
                 className="flex items-center gap-2"
               >
                 <RotateCcw className="h-4 w-4" />
@@ -533,23 +399,7 @@ const Index = () => {
                 onClick={() => {
                   setSearchQuery("");
                   setAppliedSearchQuery("");
-                  const showAllFilters = {
-                    category: [] as string[],
-                    priceRange: [0, 10000],
-                    country: [] as string[],
-                    vintage: [] as string[],
-                    drinkingWindowStart: "",
-                    drinkingWindowEnd: "",
-                    assortment: [] as string[],
-                    storageTimeRange: [0, 30],
-                    projectedReturn1y: [0, 100],
-                    projectedReturn3y: [0, 300],
-                    projectedReturn5y: [0, 500],
-                    projectedReturn10y: [0, 1000]
-                  };
-                  setFilters(showAllFilters);
-                  setAppliedFilters(showAllFilters);
-                  setShowSuggestions(false);
+                  storeClearFilters();
                   // Clear URL parameters
                   setSearchParams(new URLSearchParams());
                 }}
@@ -606,29 +456,13 @@ const Index = () => {
                 ) : showSuggestions ? (
                   <>🔥 Hetaste investeringarna just nu</>
                  ) : (
-                   <>Visar {paginatedWines.length} av {sortedWines.length} viner (totalt {systembolagetWines.length})</>
+                   <>Visar {sortedWines.length} av {systembolagetWines.length} viner</>
                  )}
               </h2>
               {!loading && !showSuggestions && (
                 <div className="text-sm text-muted-foreground">
-                  {totalPages > 1 && (
-                    <p>Sida {currentPage} av {totalPages} ({itemsPerPage} viner per sida)</p>
-                  )}
                   {filteredWines.length < systembolagetWines.length && (
                     <p>{systembolagetWines.length - sortedWines.length} viner filtrerade bort</p>
-                  )}
-                  {Object.entries(appliedFilters).some(([key, value]) => {
-                    if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 75000;
-                    if (key.includes('Range')) return (value as number[])[0] > 0 || (value as number[])[1] < (key.includes('storage') ? 30 : 1000);
-                    return value && value !== "";
-                  }) && (
-                    <p>
-                      Aktiva filter: {Object.entries(appliedFilters).filter(([key, value]) => {
-                        if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 75000;
-                        if (key.includes('Range')) return (value as number[])[0] > 0 || (value as number[])[1] < (key.includes('storage') ? 30 : 1000);
-                        return value && value !== "";
-                      }).length}
-                    </p>
                   )}
                 </div>
               )}
@@ -662,68 +496,12 @@ const Index = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              <WineTable 
-                wines={paginatedWines} 
-                onSort={handleSort}
-                sortField={sortField}
-                sortDirection={sortDirection}
-              />
-              
-              {totalPages > 1 && (
-                <div className="flex justify-center">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (currentPage > 1) {
-                              setCurrentPage(currentPage - 1);
-                            }
-                          }}
-                          className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
-                        />
-                      </PaginationItem>
-                      
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                        if (page > totalPages) return null;
-                        
-                        return (
-                          <PaginationItem key={page}>
-                            <PaginationLink
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setCurrentPage(page);
-                              }}
-                              isActive={currentPage === page}
-                            >
-                              {page}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      })}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (currentPage < totalPages) {
-                              setCurrentPage(currentPage + 1);
-                            }
-                          }}
-                          className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </div>
+            <VirtualizedWineTable 
+              wines={sortedWines} 
+              onSort={handleSort}
+              sortField={sortField as SortField}
+              sortDirection={sortDirection}
+            />
           )}
         </div>
 
