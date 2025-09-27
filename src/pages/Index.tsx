@@ -149,13 +149,14 @@ const Index = () => {
         wine.country?.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
         wine.region?.toLowerCase().includes(appliedSearchQuery.toLowerCase());
 
-      // Category filter
+      // Category filter - improved null handling
       const matchesCategory = !appliedFilters.category || 
         wine.category?.toLowerCase().includes(appliedFilters.category.toLowerCase());
 
       // Price filter
-      const matchesPrice = wine.price >= appliedFilters.priceRange[0] && 
-        wine.price <= appliedFilters.priceRange[1];
+      const winePrice = wine.price || 0;
+      const matchesPrice = winePrice >= appliedFilters.priceRange[0] && 
+        winePrice <= appliedFilters.priceRange[1];
 
       // Country filter
       const matchesCountry = !appliedFilters.country || 
@@ -165,41 +166,34 @@ const Index = () => {
       const matchesVintage = !appliedFilters.vintage || 
         wine.vintage?.toString() === appliedFilters.vintage;
 
-      // Drinking window filters
+      // Drinking window filters - improved null handling
       const matchesDrinkingStart = !appliedFilters.drinkingWindowStart || 
-        !wine.drinking_window_start ||
-        wine.drinking_window_start >= parseInt(appliedFilters.drinkingWindowStart);
+        (wine.drinking_window_start && wine.drinking_window_start >= parseInt(appliedFilters.drinkingWindowStart));
       
       const matchesDrinkingEnd = !appliedFilters.drinkingWindowEnd || 
-        !wine.drinking_window_end ||
-        wine.drinking_window_end <= parseInt(appliedFilters.drinkingWindowEnd.replace('+', ''));
+        (wine.drinking_window_end && wine.drinking_window_end <= parseInt(appliedFilters.drinkingWindowEnd.replace('+', '')));
 
-      // Storage time filter (converted from months to years for display)
+      // Storage time filter - improved null handling
       const storageTimeYears = wine.storage_time_months ? wine.storage_time_months / 12 : 0;
       const matchesStorageTime = storageTimeYears >= appliedFilters.storageTimeRange[0] && 
         storageTimeYears <= appliedFilters.storageTimeRange[1];
 
-      // Assortment filter
+      // Assortment filter - fixed logic to not exclude wines with missing assortment
       const matchesAssortment = !appliedFilters.assortment || 
-        !wine.assortment ||
-        wine.assortment.toLowerCase().includes(appliedFilters.assortment.toLowerCase());
+        (wine.assortment && wine.assortment.toLowerCase().includes(appliedFilters.assortment.toLowerCase()));
 
-      // Projected return filters
-      const matchesReturn1y = !wine.projected_return_1y || 
-        (wine.projected_return_1y >= appliedFilters.projectedReturn1y[0] && 
-         wine.projected_return_1y <= appliedFilters.projectedReturn1y[1]);
+      // Projected return filters - fixed to use minimum values instead of ranges
+      const matchesReturn1y = appliedFilters.projectedReturn1y[0] === 0 || 
+        (wine.projected_return_1y && wine.projected_return_1y >= appliedFilters.projectedReturn1y[0]);
 
-      const matchesReturn3y = !wine.projected_return_3y || 
-        (wine.projected_return_3y >= appliedFilters.projectedReturn3y[0] && 
-         wine.projected_return_3y <= appliedFilters.projectedReturn3y[1]);
+      const matchesReturn3y = appliedFilters.projectedReturn3y[0] === 0 || 
+        (wine.projected_return_3y && wine.projected_return_3y >= appliedFilters.projectedReturn3y[0]);
 
-      const matchesReturn5y = !wine.projected_return_5y || 
-        (wine.projected_return_5y >= appliedFilters.projectedReturn5y[0] && 
-         wine.projected_return_5y <= appliedFilters.projectedReturn5y[1]);
+      const matchesReturn5y = appliedFilters.projectedReturn5y[0] === 0 || 
+        (wine.projected_return_5y && wine.projected_return_5y >= appliedFilters.projectedReturn5y[0]);
 
-      const matchesReturn10y = !wine.projected_return_10y || 
-        (wine.projected_return_10y >= appliedFilters.projectedReturn10y[0] && 
-         wine.projected_return_10y <= appliedFilters.projectedReturn10y[1]);
+      const matchesReturn10y = appliedFilters.projectedReturn10y[0] === 0 || 
+        (wine.projected_return_10y && wine.projected_return_10y >= appliedFilters.projectedReturn10y[0]);
 
       return matchesSearch && matchesCategory && matchesPrice && 
              matchesCountry && matchesVintage && matchesDrinkingStart && 
@@ -316,6 +310,35 @@ const Index = () => {
               </Button>
               
               <Button 
+                variant="default" 
+                onClick={() => {
+                  setSearchQuery("");
+                  setAppliedSearchQuery("");
+                  const showAllFilters = {
+                    category: "",
+                    priceRange: [0, 5000],
+                    country: "",
+                    vintage: "",
+                    drinkingWindowStart: "",
+                    drinkingWindowEnd: "",
+                    assortment: "",
+                    storageTimeRange: [0, 30],
+                    projectedReturn1y: [0, 100],
+                    projectedReturn3y: [0, 300],
+                    projectedReturn5y: [0, 500],
+                    projectedReturn10y: [0, 1000]
+                  };
+                  setFilters(showAllFilters);
+                  setAppliedFilters(showAllFilters);
+                  setShowSuggestions(false);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Wine className="h-4 w-4" />
+                Visa alla viner
+              </Button>
+              
+              <Button 
                 variant="secondary" 
                 onClick={showHotInvestments}
                 className="flex items-center gap-2"
@@ -345,15 +368,37 @@ const Index = () => {
 
           {/* Results */}
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-foreground">
-              {loading ? (
-                <>Laddar vindata från Systembolaget...</>
-              ) : showSuggestions ? (
-                <>🔥 Hetaste investeringarna just nu</>
-              ) : (
-                <>Visar {filteredWines.length} viner</>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-xl font-semibold text-foreground">
+                {loading ? (
+                  <>Laddar vindata från Systembolaget...</>
+                ) : showSuggestions ? (
+                  <>🔥 Hetaste investeringarna just nu</>
+                ) : (
+                  <>Visar {filteredWines.length} av {systembolagetWines.length} viner</>
+                )}
+              </h2>
+              {!loading && !showSuggestions && (
+                <div className="text-sm text-muted-foreground">
+                  {filteredWines.length < systembolagetWines.length && (
+                    <p>{systembolagetWines.length - filteredWines.length} viner filtrerade bort</p>
+                  )}
+                  {Object.entries(appliedFilters).some(([key, value]) => {
+                    if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 5000;
+                    if (key.includes('Range')) return (value as number[])[0] > 0 || (value as number[])[1] < (key.includes('storage') ? 30 : 1000);
+                    return value && value !== "";
+                  }) && (
+                    <p>
+                      Aktiva filter: {Object.entries(appliedFilters).filter(([key, value]) => {
+                        if (key === 'priceRange') return (value as number[])[0] > 0 || (value as number[])[1] < 5000;
+                        if (key.includes('Range')) return (value as number[])[0] > 0 || (value as number[])[1] < (key.includes('storage') ? 30 : 1000);
+                        return value && value !== "";
+                      }).length}
+                    </p>
+                  )}
+                </div>
               )}
-            </h2>
+            </div>
             {showSuggestions && (
               <p className="text-sm text-muted-foreground mt-1">
                 Sorterat efter investeringsbetyg och 5-års prognostiserad avkastning
