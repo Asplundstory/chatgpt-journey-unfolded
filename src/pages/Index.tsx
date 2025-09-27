@@ -20,6 +20,7 @@ const Index = () => {
     vintage: "",
     drinkingWindowStart: "",
     drinkingWindowEnd: "",
+    assortment: "",
     storageTimeRange: [0, 30],
     projectedReturn1y: [0, 100],
     projectedReturn3y: [0, 300],
@@ -33,6 +34,7 @@ const Index = () => {
     vintage: "",
     drinkingWindowStart: "",
     drinkingWindowEnd: "",
+    assortment: "",
     storageTimeRange: [0, 30],
     projectedReturn1y: [0, 100],
     projectedReturn3y: [0, 300],
@@ -177,6 +179,11 @@ const Index = () => {
       const matchesStorageTime = storageTimeYears >= appliedFilters.storageTimeRange[0] && 
         storageTimeYears <= appliedFilters.storageTimeRange[1];
 
+      // Assortment filter
+      const matchesAssortment = !appliedFilters.assortment || 
+        !wine.assortment ||
+        wine.assortment.toLowerCase().includes(appliedFilters.assortment.toLowerCase());
+
       // Projected return filters
       const matchesReturn1y = !wine.projected_return_1y || 
         (wine.projected_return_1y >= appliedFilters.projectedReturn1y[0] && 
@@ -196,8 +203,8 @@ const Index = () => {
 
       return matchesSearch && matchesCategory && matchesPrice && 
              matchesCountry && matchesVintage && matchesDrinkingStart && 
-             matchesDrinkingEnd && matchesStorageTime && matchesReturn1y &&
-             matchesReturn3y && matchesReturn5y && matchesReturn10y;
+             matchesDrinkingEnd && matchesStorageTime && matchesAssortment &&
+             matchesReturn1y && matchesReturn3y && matchesReturn5y && matchesReturn10y;
     });
   }, [appliedSearchQuery, appliedFilters, systembolagetWines, showSuggestions]);
 
@@ -215,6 +222,7 @@ const Index = () => {
       vintage: "",
       drinkingWindowStart: "",
       drinkingWindowEnd: "",
+      assortment: "",
       storageTimeRange: [0, 30],
       projectedReturn1y: [0, 100],
       projectedReturn3y: [0, 300],

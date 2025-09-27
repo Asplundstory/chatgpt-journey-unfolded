@@ -12,6 +12,7 @@ interface Filters {
   vintage: string;
   drinkingWindowStart: string;
   drinkingWindowEnd: string;
+  assortment: string;
   storageTimeRange: number[];
   projectedReturn1y: number[];
   projectedReturn3y: number[];
@@ -40,6 +41,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
       vintage: "",
       drinkingWindowStart: "",
       drinkingWindowEnd: "",
+      assortment: "",
       storageTimeRange: [0, 30],
       projectedReturn1y: [0, 100],
       projectedReturn3y: [0, 300],
@@ -64,6 +66,26 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
       </CardHeader>
       
       <CardContent className="space-y-6">
+        {/* Assortment Filter - Above all other filters */}
+        <div className="space-y-2">
+          <Label htmlFor="assortment">Sortiment</Label>
+          <Select
+            value={filters.assortment}
+            onValueChange={(value) => updateFilter("assortment", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Alla sortiment" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover z-50">
+              <SelectItem value="Beställningssortiment">Beställningssortiment</SelectItem>
+              <SelectItem value="Tillfälligt sortiment">Tillfälligt sortiment</SelectItem>
+              <SelectItem value="Ordinarie sortiment">Ordinarie sortiment</SelectItem>
+              <SelectItem value="Lokalproducerat">Lokalproducerat</SelectItem>
+              <SelectItem value="Presentförpackning">Presentförpackning</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           {/* Category Filter */}
           <div className="space-y-2">
@@ -75,7 +97,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Alla kategorier" />
               </SelectTrigger>
-              <SelectContent className="bg-popover">
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="rött vin">Rött vin</SelectItem>
                 <SelectItem value="vitt vin">Vitt vin</SelectItem>
                 <SelectItem value="rosé">Rosé</SelectItem>
@@ -95,7 +117,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Alla länder" />
               </SelectTrigger>
-              <SelectContent className="bg-popover">
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="frankrike">Frankrike</SelectItem>
                 <SelectItem value="italien">Italien</SelectItem>
                 <SelectItem value="spanien">Spanien</SelectItem>
@@ -117,7 +139,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Alla årgångar" />
               </SelectTrigger>
-              <SelectContent className="bg-popover">
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="2023">2023</SelectItem>
                 <SelectItem value="2022">2022</SelectItem>
                 <SelectItem value="2021">2021</SelectItem>
@@ -141,7 +163,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Alla startår" />
               </SelectTrigger>
-              <SelectContent className="bg-popover">
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="2024">2024</SelectItem>
                 <SelectItem value="2025">2025</SelectItem>
                 <SelectItem value="2026">2026</SelectItem>
@@ -162,7 +184,7 @@ export const WineFilters = ({ filters, onFiltersChange }: WineFiltersProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Alla slutår" />
               </SelectTrigger>
-              <SelectContent className="bg-popover">
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="2025">2025</SelectItem>
                 <SelectItem value="2030">2030</SelectItem>
                 <SelectItem value="2035">2035</SelectItem>
