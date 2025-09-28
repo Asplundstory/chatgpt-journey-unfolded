@@ -10,10 +10,7 @@ export interface Filters {
   drinkingWindowEnd: string;
   assortment: string[];
   storageTimeRange: [number, number];
-  projectedReturn1y: [number, number];
-  projectedReturn3y: [number, number];
-  projectedReturn5y: [number, number];
-  projectedReturn10y: [number, number];
+  investmentPotential: [number, number];
 }
 
 interface FilterState {
@@ -52,10 +49,7 @@ const defaultFilters: Filters = {
   drinkingWindowEnd: "",
   assortment: [],
   storageTimeRange: [0, 30],
-  projectedReturn1y: [0, 100],
-  projectedReturn3y: [0, 300],
-  projectedReturn5y: [0, 500],
-  projectedReturn10y: [0, 1000]
+  investmentPotential: [1, 10]
 };
 
 export const useFilterStore = create<FilterState>()(

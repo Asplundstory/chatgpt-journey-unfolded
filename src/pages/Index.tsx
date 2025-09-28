@@ -122,32 +122,15 @@ const Index = () => {
           wine.assortment?.toLowerCase().includes(assort.toLowerCase())
         );
 
-      // Projected return filters - handle "greater than" when at max values
-      const return1yMaxValue = 100;
-      const return3yMaxValue = 300;
-      const return5yMaxValue = 500;
-      const return10yMaxValue = 1000;
-
-      const matchesReturn1y = appliedFilters.projectedReturn1y[0] === 0 || 
-        (wine.projected_return_1y && wine.projected_return_1y >= appliedFilters.projectedReturn1y[0] &&
-         (appliedFilters.projectedReturn1y[1] >= return1yMaxValue ? true : wine.projected_return_1y <= appliedFilters.projectedReturn1y[1]));
-
-      const matchesReturn3y = appliedFilters.projectedReturn3y[0] === 0 || 
-        (wine.projected_return_3y && wine.projected_return_3y >= appliedFilters.projectedReturn3y[0] &&
-         (appliedFilters.projectedReturn3y[1] >= return3yMaxValue ? true : wine.projected_return_3y <= appliedFilters.projectedReturn3y[1]));
-
-      const matchesReturn5y = appliedFilters.projectedReturn5y[0] === 0 || 
-        (wine.projected_return_5y && wine.projected_return_5y >= appliedFilters.projectedReturn5y[0] &&
-         (appliedFilters.projectedReturn5y[1] >= return5yMaxValue ? true : wine.projected_return_5y <= appliedFilters.projectedReturn5y[1]));
-
-      const matchesReturn10y = appliedFilters.projectedReturn10y[0] === 0 || 
-        (wine.projected_return_10y && wine.projected_return_10y >= appliedFilters.projectedReturn10y[0] &&
-         (appliedFilters.projectedReturn10y[1] >= return10yMaxValue ? true : wine.projected_return_10y <= appliedFilters.projectedReturn10y[1]));
+      // Investment potential filter
+      const matchesInvestmentPotential = appliedFilters.investmentPotential[0] === 1 || 
+        (wine.investment_score && wine.investment_score >= appliedFilters.investmentPotential[0] &&
+         wine.investment_score <= appliedFilters.investmentPotential[1]);
 
       return matchesSearch && matchesCategory && matchesPrice && 
              matchesCountry && matchesVintage && matchesDrinkingStart && 
              matchesDrinkingEnd && matchesStorageTime && matchesAssortment &&
-             matchesReturn1y && matchesReturn3y && matchesReturn5y && matchesReturn10y;
+             matchesInvestmentPotential;
     });
   }, [appliedSearchQuery, debouncedSearchQuery, appliedFilters, systembolagetWines, showSuggestions]);
 
@@ -255,18 +238,9 @@ const Index = () => {
       params.set('drinkingEnd', filtersToSync.drinkingWindowEnd);
     }
     
-    // Add projected return filters if not default values
-    if (filtersToSync.projectedReturn1y[0] !== 0 || filtersToSync.projectedReturn1y[1] !== 100) {
-      params.set('return1y', `${filtersToSync.projectedReturn1y[0]}-${filtersToSync.projectedReturn1y[1]}`);
-    }
-    if (filtersToSync.projectedReturn3y[0] !== 0 || filtersToSync.projectedReturn3y[1] !== 300) {
-      params.set('return3y', `${filtersToSync.projectedReturn3y[0]}-${filtersToSync.projectedReturn3y[1]}`);
-    }
-    if (filtersToSync.projectedReturn5y[0] !== 0 || filtersToSync.projectedReturn5y[1] !== 500) {
-      params.set('return5y', `${filtersToSync.projectedReturn5y[0]}-${filtersToSync.projectedReturn5y[1]}`);
-    }
-    if (filtersToSync.projectedReturn10y[0] !== 0 || filtersToSync.projectedReturn10y[1] !== 1000) {
-      params.set('return10y', `${filtersToSync.projectedReturn10y[0]}-${filtersToSync.projectedReturn10y[1]}`);
+    // Add investment potential filter if not default values
+    if (filtersToSync.investmentPotential[0] !== 1 || filtersToSync.investmentPotential[1] !== 10) {
+      params.set('investmentPotential', `${filtersToSync.investmentPotential[0]}-${filtersToSync.investmentPotential[1]}`);
     }
     
     setSearchParams(params);
@@ -285,10 +259,7 @@ const Index = () => {
     const drinkingWindowStart = searchParams.get('drinkingStart') || '';
     const drinkingWindowEnd = searchParams.get('drinkingEnd') || '';
     
-    const projectedReturn1y: [number, number] = searchParams.get('return1y')?.split('-').map(Number) as [number, number] || [0, 100];
-    const projectedReturn3y: [number, number] = searchParams.get('return3y')?.split('-').map(Number) as [number, number] || [0, 300];
-    const projectedReturn5y: [number, number] = searchParams.get('return5y')?.split('-').map(Number) as [number, number] || [0, 500];
-    const projectedReturn10y: [number, number] = searchParams.get('return10y')?.split('-').map(Number) as [number, number] || [0, 1000];
+    const investmentPotential: [number, number] = searchParams.get('investmentPotential')?.split('-').map(Number) as [number, number] || [1, 10];
     
     const urlFilters = {
       category,
@@ -299,10 +270,7 @@ const Index = () => {
       drinkingWindowEnd,
       assortment,
       storageTimeRange,
-      projectedReturn1y,
-      projectedReturn3y,
-      projectedReturn5y,
-      projectedReturn10y
+      investmentPotential
     };
     
     setSearchQuery(search);
