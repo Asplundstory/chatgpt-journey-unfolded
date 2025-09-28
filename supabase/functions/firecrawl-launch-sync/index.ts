@@ -55,10 +55,7 @@ serve(async (req) => {
     if (launches.length > 0) {
       const { error: insertError } = await supabase
         .from('launch_plans')
-        .upsert(launches, {
-          onConflict: 'title,date',
-          ignoreDuplicates: false
-        });
+        .insert(launches);
 
       if (insertError) {
         throw insertError;
@@ -120,10 +117,7 @@ async function processStaticExcelFiles(supabase: any): Promise<void> {
     try {
       await supabase
         .from('launch_plans')
-        .upsert([plan], {
-          onConflict: 'title,date',
-          ignoreDuplicates: false
-        });
+        .insert([plan]);
       
       console.log(`Processed static Excel plan: ${plan.title}`);
     } catch (error) {
