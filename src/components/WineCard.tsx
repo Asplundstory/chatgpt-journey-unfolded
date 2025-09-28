@@ -19,11 +19,6 @@ export const WineCard = ({ wine }: WineCardProps) => {
             </CardTitle>
             <div className="flex items-center gap-2 mt-1">
               <p className="text-sm text-muted-foreground">{wine.producer}</p>
-              {wine.product_id && (
-                <Badge variant="outline" className="text-xs">
-                  Nr {wine.product_id}
-                </Badge>
-              )}
             </div>
           </div>
           <Badge variant="secondary" className="ml-2">

@@ -141,17 +141,10 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
                     )}
                   </Button>
                 </CollapsibleTrigger>
-                <div>
-                  <p className="font-medium text-foreground truncate">{wine.name}</p>
-                  <div className="flex items-center gap-2">
+                  <div>
+                    <p className="font-medium text-foreground truncate">{wine.name}</p>
                     <p className="text-muted-foreground text-xs truncate">{wine.producer}</p>
-                    {wine.product_id && (
-                      <Badge variant="outline" className="text-xs">
-                        Nr {wine.product_id}
-                      </Badge>
-                    )}
                   </div>
-                </div>
               </div>
               
               <div className="col-span-2">
@@ -234,6 +227,9 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
                     )}
                     {wine.assortment && (
                       <p><span className="text-muted-foreground">Sortiment:</span> {wine.assortment}</p>
+                    )}
+                    {wine.product_id && (
+                      <p><span className="text-muted-foreground">Artikelnummer:</span> Nr {wine.product_id}</p>
                     )}
                     {wine.sales_start_date && (
                       <p><span className="text-muted-foreground">Lansering:</span> {new Date(wine.sales_start_date).toLocaleDateString('sv-SE')}</p>
