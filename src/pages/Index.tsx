@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDebounce } from "use-debounce";
 import { Search, Wine, Filter, RotateCcw, TrendingUp, Download } from "lucide-react";
@@ -19,6 +19,7 @@ const Index = () => {
   const { wines: systembolagetWines, loading, error, refetch } = useWines();
   const { exportToCSV, exportToJSON } = useWineExport();
   const [searchParams, setSearchParams] = useSearchParams();
+  const isInitialLoad = useRef(true);
   
   // Zustand store for filters and state management
   const {
@@ -282,11 +283,14 @@ const Index = () => {
   // Load filters from URL on component mount
   useEffect(() => {
     loadFiltersFromURL();
+    isInitialLoad.current = false;
   }, []);
 
-  // Update URL when applied filters change
+  // Update URL when applied filters change (but not on initial load)
   useEffect(() => {
-    updateURLFromFilters(appliedFilters, appliedSearchQuery);
+    if (!isInitialLoad.current) {
+      updateURLFromFilters(appliedFilters, appliedSearchQuery);
+    }
   }, [appliedFilters, appliedSearchQuery]);
 
   const showHotInvestments = () => {
