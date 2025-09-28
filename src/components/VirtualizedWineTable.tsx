@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { WineFavoriteButton } from '@/components/WineFavoriteButton';
 import { useWineLists } from '@/hooks/useWineLists';
 import { Wine } from '@/hooks/useWines';
@@ -179,39 +180,31 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
               <div className="col-span-2 flex items-center gap-2 justify-end">
                 <WineFavoriteButton wineId={wine.id} />
                 
-                <div className="relative group">
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                  <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-lg min-w-[200px]">
-                    <div className="p-1">
-                      {wineLists.length > 0 && (
-                        <>
-                          {wineLists.map((list) => (
-                            <Button
-                              key={list.id}
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start text-xs h-8"
-                              onClick={() => handleAddToList(wine.id, list.id)}
-                            >
-                              {list.name}
-                            </Button>
-                          ))}
-                          <div className="border-t border-border my-1" />
-                        </>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start text-xs h-8"
-                        onClick={() => handleAddToList(wine.id)}
-                      >
-                        + Skapa ny lista
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[200px]">
+                    {wineLists.length > 0 && (
+                      <>
+                        {wineLists.map((list) => (
+                          <DropdownMenuItem
+                            key={list.id}
+                            onClick={() => handleAddToList(wine.id, list.id)}
+                          >
+                            {list.name}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <DropdownMenuItem onClick={() => handleAddToList(wine.id)}>
+                      + Skapa ny lista
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
