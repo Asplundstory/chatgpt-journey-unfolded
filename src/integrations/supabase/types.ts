@@ -18,8 +18,13 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          description: string | null
+          excel_url: string | null
           id: string
+          product_count: number | null
           quarter: number | null
+          scraped_at: string | null
+          source: string | null
           title: string
           url: string | null
           year: number | null
@@ -27,8 +32,13 @@ export type Database = {
         Insert: {
           created_at?: string
           date: string
+          description?: string | null
+          excel_url?: string | null
           id?: string
+          product_count?: number | null
           quarter?: number | null
+          scraped_at?: string | null
+          source?: string | null
           title: string
           url?: string | null
           year?: number | null
@@ -36,8 +46,13 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          description?: string | null
+          excel_url?: string | null
           id?: string
+          product_count?: number | null
           quarter?: number | null
+          scraped_at?: string | null
+          source?: string | null
           title?: string
           url?: string | null
           year?: number | null

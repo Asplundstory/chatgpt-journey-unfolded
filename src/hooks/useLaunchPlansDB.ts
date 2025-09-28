@@ -9,6 +9,11 @@ export interface LaunchPlan {
   year?: number;
   quarter?: number;
   created_at?: string;
+  source?: string;
+  scraped_at?: string;
+  excel_url?: string;
+  product_count?: number;
+  description?: string;
 }
 
 export const useLaunchPlansDB = () => {

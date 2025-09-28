@@ -2,19 +2,53 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ExternalLink, Download, TrendingUp, Sparkles } from "lucide-react";
-import { useLaunchPlans, LaunchPlan } from "@/hooks/useLaunchPlans";
+import { Calendar, ExternalLink, Download, TrendingUp, Sparkles, RefreshCw } from "lucide-react";
+import { useLaunchPlansDB, LaunchPlan } from "@/hooks/useLaunchPlansDB";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export const LaunchPlans = () => {
-  const { launchPlans, loading, error } = useLaunchPlans();
+  const { launchPlans, loading, error } = useLaunchPlansDB();
   const [expanded, setExpanded] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const { toast } = useToast();
 
   const displayPlans = expanded ? launchPlans : launchPlans.slice(0, 3);
   const currentYear = new Date().getFullYear();
   const upcomingPlans = launchPlans.filter(plan => plan.year >= currentYear);
 
   const handleDownload = (plan: LaunchPlan) => {
-    window.open(plan.url, '_blank');
+    if (plan.url || plan.excel_url) {
+      window.open(plan.url || plan.excel_url!, '_blank');
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke('firecrawl-launch-sync');
+      
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Synkronisering slutförd",
+        description: "Lanseringsplaner har uppdaterats från Systembolaget",
+      });
+
+      // Refresh the data (the hook should automatically update)
+      window.location.reload();
+    } catch (error) {
+      console.error('Error syncing launch plans:', error);
+      toast({
+        title: "Synkroniseringsfel",
+        description: "Kunde inte hämta lanseringsplaner från Systembolaget",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   if (loading) {
@@ -48,9 +82,21 @@ export const LaunchPlans = () => {
             <Sparkles className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">Kommande Lanseringar</CardTitle>
           </div>
-          <Badge variant="secondary" className="text-xs">
-            {upcomingPlans.length} kommande
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSync}
+              disabled={syncing}
+              className="h-8 px-3"
+            >
+              <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Synkar...' : 'Uppdatera'}
+            </Button>
+            <Badge variant="secondary" className="text-xs">
+              {upcomingPlans.length} kommande
+            </Badge>
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">
           Systembolagets officiella lanseringsplaner - identifiera nya investeringsmöjligheter tidigt
@@ -83,13 +129,16 @@ export const LaunchPlans = () => {
                   <h4 className="font-medium text-sm">{plan.title}</h4>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-muted-foreground">
-                      {plan.date}
+                      {new Date(plan.date).toLocaleDateString('sv-SE')}
                     </span>
                     {plan.quarter && (
                       <Badge variant="outline" className="text-xs h-5">
-                        {plan.quarter}
+                        Q{plan.quarter}
                       </Badge>
                     )}
+                    <Badge variant="outline" className="text-xs h-5">
+                      {plan.source === 'firecrawl' ? 'Live' : plan.source === 'firecrawl_excel' ? 'Excel' : 'Statisk'}
+                    </Badge>
                     {isUpcoming && (
                       <div className="flex items-center gap-1">
                         <TrendingUp className="h-3 w-3 text-green-600" />
@@ -99,19 +148,26 @@ export const LaunchPlans = () => {
                       </div>
                     )}
                   </div>
+                  {plan.description && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {plan.description}
+                    </p>
+                  )}
                 </div>
               </div>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDownload(plan)}
-                className="h-8 px-3"
-              >
-                <Download className="h-3 w-3 mr-1" />
-                Excel
-                <ExternalLink className="h-3 w-3 ml-1" />
-              </Button>
+              {(plan.url || plan.excel_url) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDownload(plan)}
+                  className="h-8 px-3"
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  {plan.source === 'firecrawl_excel' || plan.excel_url ? 'Excel' : 'Info'}
+                  <ExternalLink className="h-3 w-3 ml-1" />
+                </Button>
+              )}
             </div>
           );
         })}
