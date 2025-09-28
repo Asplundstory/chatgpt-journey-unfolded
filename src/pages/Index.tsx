@@ -1,15 +1,17 @@
 import { useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDebounce } from "use-debounce";
-import { Search, Wine, Filter, RotateCcw, TrendingUp, Download } from "lucide-react";
+import { Search, Wine, Filter, RotateCcw, TrendingUp, Download, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VirtualizedWineTable, SortField, SortDirection } from "@/components/VirtualizedWineTable";
 import { WineFilters } from "@/components/WineFilters";
 import { WineRecommendations } from "@/components/WineRecommendations";
 import { WineListManager } from "@/components/WineListManager";
+import { AboutService } from "@/components/AboutService";
 import { useWines } from "@/hooks/useWines";
 import { useWineExport } from "@/hooks/useWineExport";
 import { SystembolagetSyncButton } from "@/components/SystembolagetSyncButton";
@@ -553,6 +555,11 @@ const Index = () => {
             <WineListManager wines={systembolagetWines} />
           </CardContent>
         </Card>
+
+        {/* About Service */}
+        <div className="mt-8">
+          <AboutService />
+        </div>
       </div>
     </div>
   );

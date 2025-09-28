@@ -143,7 +143,14 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
                 </CollapsibleTrigger>
                 <div>
                   <p className="font-medium text-foreground truncate">{wine.name}</p>
-                  <p className="text-muted-foreground text-xs truncate">{wine.producer}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-muted-foreground text-xs truncate">{wine.producer}</p>
+                    {wine.product_id && (
+                      <Badge variant="outline" className="text-xs">
+                        Nr {wine.product_id}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
               
