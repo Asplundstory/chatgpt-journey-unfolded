@@ -325,7 +325,7 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
             onClick={() => handleSort('investment_score')}
             className="h-auto p-0 font-medium hover:bg-transparent"
           >
-            Betyg
+            Investeringspotential
             {getSortIcon('investment_score')}
           </Button>
         </div>
