@@ -289,7 +289,72 @@ const Index = () => {
   // Update URL when applied filters change (but not on initial load)
   useEffect(() => {
     if (!isInitialLoad.current) {
-      updateURLFromFilters(appliedFilters, appliedSearchQuery);
+      console.log('About to update URL with filters:', appliedFilters);
+      console.log('About to update URL with search:', appliedSearchQuery);
+      
+      // Create new URL params
+      const params = new URLSearchParams(window.location.search);
+      
+      // Clear all existing params first
+      params.delete('search');
+      params.delete('category');
+      params.delete('country');
+      params.delete('vintage');
+      params.delete('assortment');
+      params.delete('priceRange');
+      params.delete('storageTimeRange');
+      params.delete('drinkingStart');
+      params.delete('drinkingEnd');
+      params.delete('investmentPotential');
+      
+      // Add search query if present
+      if (appliedSearchQuery) {
+        params.set('search', appliedSearchQuery);
+      }
+      
+      // Add array filters if they have values
+      if (appliedFilters.category.length > 0) {
+        params.set('category', appliedFilters.category.join(','));
+      }
+      if (appliedFilters.country.length > 0) {
+        params.set('country', appliedFilters.country.join(','));
+      }
+      if (appliedFilters.vintage.length > 0) {
+        params.set('vintage', appliedFilters.vintage.join(','));
+      }
+      if (appliedFilters.assortment.length > 0) {
+        params.set('assortment', appliedFilters.assortment.join(','));
+      }
+      
+      // Add range filters if not default values
+      if (appliedFilters.priceRange[0] !== 0 || appliedFilters.priceRange[1] !== 10000) {
+        params.set('priceRange', `${appliedFilters.priceRange[0]}-${appliedFilters.priceRange[1]}`);
+      }
+      if (appliedFilters.storageTimeRange[0] !== 0 || appliedFilters.storageTimeRange[1] !== 30) {
+        params.set('storageTimeRange', `${appliedFilters.storageTimeRange[0]}-${appliedFilters.storageTimeRange[1]}`);
+      }
+      
+      // Add drinking window filters if present
+      if (appliedFilters.drinkingWindowStart) {
+        params.set('drinkingStart', appliedFilters.drinkingWindowStart);
+      }
+      if (appliedFilters.drinkingWindowEnd) {
+        params.set('drinkingEnd', appliedFilters.drinkingWindowEnd);
+      }
+      
+      // Add investment potential filter if not default values
+      if (appliedFilters.investmentPotential[0] !== 1 || appliedFilters.investmentPotential[1] !== 10) {
+        params.set('investmentPotential', `${appliedFilters.investmentPotential[0]}-${appliedFilters.investmentPotential[1]}`);
+      }
+      
+      console.log('New URL params string:', params.toString());
+      console.log('Current URL:', window.location.href);
+      
+      // Update URL without causing navigation
+      const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+      window.history.pushState({}, '', newUrl);
+      
+      console.log('URL after update:', window.location.href);
     }
   }, [appliedFilters, appliedSearchQuery]);
 
