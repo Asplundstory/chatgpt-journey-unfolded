@@ -382,7 +382,16 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Wine className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">The Story – Vinguide</h1>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">The Story – Vinguide</h1>
+                <button 
+                  onClick={() => document.getElementById('about-service')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="text-sm text-muted-foreground hover:text-primary underline-offset-4 hover:underline flex items-center gap-1 mt-1"
+                >
+                  <Info className="h-3 w-3" />
+                  Om tjänsten
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-sm">
@@ -557,8 +566,8 @@ const Index = () => {
         </Card>
 
         {/* About Service */}
-        <div className="mt-8">
-          <AboutService />
+        <div id="about-service" className="mt-8">
+            <AboutService />
         </div>
       </div>
     </div>
