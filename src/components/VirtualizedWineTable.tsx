@@ -238,16 +238,16 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
                         <p><span className="text-muted-foreground">Investeringsbetyg:</span> {wine.investment_score}/10</p>
                       )}
                       {wine.projected_return_1y && (
-                        <p><span className="text-muted-foreground">1-års avkastning:</span> {wine.projected_return_1y}%</p>
+                        <p><span className="text-muted-foreground">1-års avkastning:</span> {Math.round(wine.projected_return_1y)}%</p>
                       )}
                       {wine.projected_return_3y && (
-                        <p><span className="text-muted-foreground">3-års avkastning:</span> {wine.projected_return_3y}%</p>
+                        <p><span className="text-muted-foreground">3-års avkastning:</span> {Math.round(wine.projected_return_3y)}%</p>
                       )}
                       {wine.projected_return_5y && (
-                        <p><span className="text-muted-foreground">5-års avkastning:</span> {wine.projected_return_5y}%</p>
+                        <p><span className="text-muted-foreground">5-års avkastning:</span> {Math.round(wine.projected_return_5y)}%</p>
                       )}
                       {wine.projected_return_10y && (
-                        <p><span className="text-muted-foreground">10-års avkastning:</span> {wine.projected_return_10y}%</p>
+                        <p><span className="text-muted-foreground">10-års avkastning:</span> {Math.round(wine.projected_return_10y)}%</p>
                       )}
                     </div>
                   </div>
