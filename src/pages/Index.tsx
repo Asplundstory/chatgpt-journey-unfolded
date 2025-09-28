@@ -1,9 +1,10 @@
 import { useMemo, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDebounce } from "use-debounce";
-import { Search, Wine, Filter, RotateCcw, TrendingUp, Download, Info } from "lucide-react";
+import { Search, Wine, Filter, RotateCcw, TrendingUp, Download, Info, ChevronDown, Settings, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -428,75 +429,89 @@ const Index = () => {
 
             <WineFilters filters={filters} onFiltersChange={setFilters} />
 
-            {/* Filter Control Buttons */}
-            <div className="flex flex-wrap gap-3 pt-4 border-t">
-              <Button 
-                onClick={storeApplyFilters}
-                className="flex items-center gap-2"
-              >
-                <Filter className="h-4 w-4" />
-                Applicera filter
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={storeClearFilters}
-                className="flex items-center gap-2"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Rensa val
-              </Button>
-              
-              <Button 
-                variant="default" 
-                onClick={() => {
-                  setSearchQuery("");
-                  setAppliedSearchQuery("");
-                  storeClearFilters();
-                  // Clear URL parameters
-                  setSearchParams(new URLSearchParams());
-                }}
-                className="flex items-center gap-2"
-              >
-                <Wine className="h-4 w-4" />
-                Visa alla viner
-              </Button>
-              
-              <Button 
-                variant="secondary" 
-                onClick={showHotInvestments}
-                className="flex items-center gap-2"
-                disabled={systembolagetWines.filter(w => w.investment_score && w.projected_return_5y).length === 0}
-              >
-                <TrendingUp className="h-4 w-4" />
-                {systembolagetWines.length === 0 
-                  ? 'Inga viner laddade' 
-                  : systembolagetWines.filter(w => w.investment_score && w.projected_return_5y).length === 0
-                  ? 'Investeringsdata saknas'
-                  : 'Föreslå hetaste investeringar'
-                }
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={refetch}
-                className="flex items-center gap-2"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Uppdatera data
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={() => exportToCSV(sortedWines, `vinlista_${new Date().toISOString().split('T')[0]}`)}
-                className="flex items-center gap-2"
-                disabled={sortedWines.length === 0}
-              >
-                <Download className="h-4 w-4" />
-                Exportera CSV
-              </Button>
-              
-              <SystembolagetSyncButton />
+            {/* Primary Actions - Search & Filter Controls */}
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-3 p-4 bg-muted/50 rounded-lg">
+                <Button 
+                  onClick={storeApplyFilters}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Applicera filter
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={storeClearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Rensa filter
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchQuery("");
+                    setAppliedSearchQuery("");
+                    storeClearFilters();
+                    setSearchParams(new URLSearchParams());
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Wine className="h-4 w-4" />
+                  Visa alla viner
+                </Button>
+                
+                <Button 
+                  variant="secondary" 
+                  onClick={showHotInvestments}
+                  className="flex items-center gap-2"
+                  disabled={systembolagetWines.filter(w => w.investment_score && w.projected_return_5y).length === 0}
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  {systembolagetWines.length === 0 
+                    ? 'Inga viner laddade' 
+                    : systembolagetWines.filter(w => w.investment_score && w.projected_return_5y).length === 0
+                    ? 'Investeringsdata saknas'
+                    : 'Föreslå hetaste investeringar'
+                  }
+                </Button>
+              </div>
+
+              {/* Secondary Actions */}
+              <div className="flex flex-wrap gap-3 justify-between">
+                {/* Data Management Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Datahantering
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem 
+                      onClick={() => refetch()}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Uppdatera data
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => exportToCSV(sortedWines, `vinlista_${new Date().toISOString().split('T')[0]}`)}
+                      disabled={sortedWines.length === 0}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Download className="h-4 w-4" />
+                      Exportera CSV
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Admin Sync Functions */}
+                <SystembolagetSyncButton />
+              </div>
             </div>
           </div>
 
