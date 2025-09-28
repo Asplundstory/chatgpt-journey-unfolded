@@ -75,8 +75,8 @@ const Index = () => {
     }
 
     return wines.filter(wine => {
-      // Search filter using debounced search query
-      const searchToUse = appliedSearchQuery || debouncedSearchQuery;
+      // Search filter using debounced search query for immediate results
+      const searchToUse = debouncedSearchQuery || appliedSearchQuery;
       const matchesSearch = !searchToUse || 
         wine.name?.toLowerCase().includes(searchToUse.toLowerCase()) ||
         wine.producer?.toLowerCase().includes(searchToUse.toLowerCase()) ||
