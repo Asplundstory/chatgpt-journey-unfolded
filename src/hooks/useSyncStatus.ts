@@ -28,9 +28,15 @@ export const useSyncStatus = () => {
         .select('*')
         .order('started_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
+        // If user doesn't have access (RLS), silently fail
+        if (error.code === '42501' || error.message?.includes('permission denied')) {
+          console.log('No access to sync status (admin only)');
+          setCurrentSync(null);
+          return;
+        }
         console.error('Error fetching sync status:', error);
         return;
       }
@@ -38,6 +44,7 @@ export const useSyncStatus = () => {
       setCurrentSync(data || null);
     } catch (err) {
       console.error('Error fetching sync status:', err);
+      setCurrentSync(null);
     } finally {
       setLoading(false);
     }

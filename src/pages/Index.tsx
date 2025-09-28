@@ -202,23 +202,19 @@ const Index = () => {
 
   // URL synchronization functions
   const updateURLFromFilters = (filtersToSync: typeof filters, searchToSync: string) => {
-    console.log('updateURLFromFilters called with:', { filtersToSync, searchToSync });
     const params = new URLSearchParams();
     
     // Add search query if present
     if (searchToSync) {
       params.set('search', searchToSync);
-      console.log('Added search to URL:', searchToSync);
     }
     
     // Add array filters if they have values
     if (filtersToSync.category.length > 0) {
       params.set('category', filtersToSync.category.join(','));
-      console.log('Added category to URL:', filtersToSync.category);
     }
     if (filtersToSync.country.length > 0) {
       params.set('country', filtersToSync.country.join(','));
-      console.log('Added country to URL:', filtersToSync.country);
     }
     if (filtersToSync.vintage.length > 0) {
       params.set('vintage', filtersToSync.vintage.join(','));
@@ -230,7 +226,6 @@ const Index = () => {
     // Add range filters if not default values
     if (filtersToSync.priceRange[0] !== 0 || filtersToSync.priceRange[1] !== 10000) {
       params.set('priceRange', `${filtersToSync.priceRange[0]}-${filtersToSync.priceRange[1]}`);
-      console.log('Added priceRange to URL:', filtersToSync.priceRange);
     }
     if (filtersToSync.storageTimeRange[0] !== 0 || filtersToSync.storageTimeRange[1] !== 30) {
       params.set('storageTimeRange', `${filtersToSync.storageTimeRange[0]}-${filtersToSync.storageTimeRange[1]}`);
@@ -247,18 +242,12 @@ const Index = () => {
     // Add investment potential filter if not default values
     if (filtersToSync.investmentPotential[0] !== 1 || filtersToSync.investmentPotential[1] !== 10) {
       params.set('investmentPotential', `${filtersToSync.investmentPotential[0]}-${filtersToSync.investmentPotential[1]}`);
-      console.log('Added investmentPotential to URL:', filtersToSync.investmentPotential);
     }
     
-    console.log('Final URL params:', params.toString());
     setSearchParams(params);
-    console.log('setSearchParams called');
   };
 
   const loadFiltersFromURL = () => {
-    console.log('loadFiltersFromURL called');
-    console.log('Current URL search params:', searchParams.toString());
-    
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category')?.split(',').filter(Boolean) || [];
     const country = searchParams.get('country')?.split(',').filter(Boolean) || [];
@@ -285,9 +274,6 @@ const Index = () => {
       investmentPotential
     };
     
-    console.log('Loading filters from URL:', urlFilters);
-    console.log('Loading search from URL:', search);
-    
     setSearchQuery(search);
     setAppliedSearchQuery(search);
     setFilters(urlFilters);
@@ -302,12 +288,7 @@ const Index = () => {
 
   // Update URL when applied filters change (but not on initial load)
   useEffect(() => {
-    console.log('URL update useEffect triggered, isInitialLoad:', isInitialLoad.current);
-    console.log('Applied filters:', appliedFilters);
-    console.log('Applied search query:', appliedSearchQuery);
-    
     if (!isInitialLoad.current) {
-      console.log('Updating URL from applied filters');
       updateURLFromFilters(appliedFilters, appliedSearchQuery);
     }
   }, [appliedFilters, appliedSearchQuery]);
