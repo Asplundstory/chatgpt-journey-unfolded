@@ -284,10 +284,15 @@ const Index = () => {
     loadFiltersFromURL();
   }, []);
 
+  // Update URL when applied filters change
+  useEffect(() => {
+    updateURLFromFilters(appliedFilters, appliedSearchQuery);
+  }, [appliedFilters, appliedSearchQuery]);
+
   const showHotInvestments = () => {
     // Check if we have wines with investment data
     const winesWithInvestmentData = systembolagetWines.filter(wine => 
-      wine.investment_score && wine.projected_return_5y
+      wine.investment_score && wine.investment_score > 0
     );
     
     if (winesWithInvestmentData.length === 0) {
