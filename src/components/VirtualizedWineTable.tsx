@@ -13,6 +13,31 @@ import { toast } from 'sonner';
 export type SortField = 'name' | 'country' | 'region' | 'vintage' | 'category' | 'assortment' | 'price' | 'investment_score' | 'projected_return_1y';
 export type SortDirection = 'asc' | 'desc' | null;
 
+const formatDrinkingWindow = (value: string | number): string => {
+  if (!value) return '';
+  
+  // Convert to string and extract year and month
+  const str = value.toString();
+  
+  // Handle different formats - assuming format like "202202" for Feb 2022
+  if (str.length >= 6) {
+    const year = str.substring(0, 4);
+    const monthNum = parseInt(str.substring(4, 6));
+    
+    const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+    const month = months[monthNum - 1] || '';
+    
+    return `${year} ${month}`;
+  }
+  
+  // If it's just a year
+  if (str.length === 4) {
+    return str;
+  }
+  
+  return str;
+};
+
 interface VirtualizedWineTableProps {
   wines: Wine[];
   onSort: (field: SortField, direction: SortDirection) => void;
@@ -221,7 +246,7 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
                     <h4 className="font-medium text-foreground mb-2">Lagring & Drickning</h4>
                     <div className="space-y-1">
                       {wine.drinking_window_start && wine.drinking_window_end && (
-                        <p><span className="text-muted-foreground">Drinkfönster:</span> {wine.drinking_window_start} - {wine.drinking_window_end}</p>
+                        <p><span className="text-muted-foreground">Drinkfönster:</span> {formatDrinkingWindow(wine.drinking_window_start)} - {formatDrinkingWindow(wine.drinking_window_end)}</p>
                       )}
                       {wine.storage_time_months && (
                         <p><span className="text-muted-foreground">Lagringstid:</span> {Math.round(wine.storage_time_months / 12)} år</p>
