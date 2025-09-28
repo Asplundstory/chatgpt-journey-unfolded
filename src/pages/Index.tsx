@@ -15,7 +15,7 @@ import { WineListManager } from "@/components/WineListManager";
 import { AboutService } from "@/components/AboutService";
 import { useWines } from "@/hooks/useWines";
 import { useWineExport } from "@/hooks/useWineExport";
-import { SystembolagetSyncButton } from "@/components/SystembolagetSyncButton";
+import { DataSyncManager } from "@/components/DataSyncManager";
 import { useFilterStore } from "@/stores/filterStore";
 
 const Index = () => {
@@ -509,8 +509,8 @@ const Index = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Admin Sync Functions */}
-                <SystembolagetSyncButton />
+                {/* Data Synchronization */}
+                <DataSyncManager />
               </div>
             </div>
           </div>
