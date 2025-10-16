@@ -33,6 +33,7 @@ export const DataSyncManager = () => {
     githubSync: false,
     firecrawlSync: false,
     batchSync: false,
+    vinmonopoletSync: false,
   });
 
   const updateLoadingState = (key: keyof typeof loadingStates, value: boolean) => {
@@ -48,11 +49,13 @@ export const DataSyncManager = () => {
       });
 
       // Start all sync processes
-      const [githubResult, firecrawlResult] = await Promise.allSettled([
+      const [githubResult, firecrawlResult, vinmonopoletResult] = await Promise.allSettled([
         // GitHub data sync
         supabase.functions.invoke('sync-systembolaget-data', { body: {} }),
         // Firecrawl launch plans sync  
         supabase.functions.invoke('firecrawl-launch-sync', { body: {} }),
+        // Vinmonopolet data sync
+        supabase.functions.invoke('sync-vinmonopolet', { body: {} }),
       ]);
 
       let successCount = 0;
@@ -70,7 +73,13 @@ export const DataSyncManager = () => {
         errorMessages.push("Firecrawl sync misslyckades");
       }
 
-      if (successCount === 2) {
+      if (vinmonopoletResult.status === 'fulfilled' && !vinmonopoletResult.value.error) {
+        successCount++;
+      } else {
+        errorMessages.push("Vinmonopolet sync misslyckades");
+      }
+
+      if (successCount === 3) {
         toast({
           title: "Fullständig synkning slutförd!",
           description: "Alla datakällor har synkroniserats framgångsrikt.",
@@ -78,7 +87,7 @@ export const DataSyncManager = () => {
       } else if (successCount > 0) {
         toast({
           title: "Delvis synkning slutförd",
-          description: `${successCount}/2 datakällor synkroniserade. ${errorMessages.join(', ')}`,
+          description: `${successCount}/3 datakällor synkroniserade. ${errorMessages.join(', ')}`,
           variant: "destructive",
         });
       } else {
@@ -193,6 +202,31 @@ export const DataSyncManager = () => {
     }
   };
 
+  const handleVinmonopoletSync = async () => {
+    updateLoadingState('vinmonopoletSync', true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-vinmonopolet', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Vinmonopolet synkning startad!",
+        description: "Hämtar produktdata från Vinmonopolet API...",
+      });
+    } catch (error) {
+      console.error('Vinmonopolet sync error:', error);
+      toast({
+        title: "Vinmonopolet synkning misslyckades",
+        description: error instanceof Error ? error.message : "Kunde inte starta synkning",
+        variant: "destructive",
+      });
+    } finally {
+      updateLoadingState('vinmonopoletSync', false);
+    }
+  };
+
   const isAnyLoading = Object.values(loadingStates).some(Boolean) || isRunning;
 
   return (
@@ -303,6 +337,28 @@ export const DataSyncManager = () => {
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Zap className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+              {/* Vinmonopolet Data Source */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🇳🇴</span>
+                  <div>
+                    <p className="font-medium">Vinmonopolet</p>
+                    <p className="text-sm text-muted-foreground">Produktdata från Norge</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleVinmonopoletSync}
+                  disabled={isAnyLoading}
+                >
+                  {loadingStates.vinmonopoletSync ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
                   )}
                 </Button>
               </div>
