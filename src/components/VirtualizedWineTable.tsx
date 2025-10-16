@@ -11,7 +11,7 @@ import { useWineLists } from '@/hooks/useWineLists';
 import { Wine } from '@/hooks/useWines';
 import { toast } from 'sonner';
 
-export type SortField = 'name' | 'country' | 'region' | 'vintage' | 'category' | 'assortment' | 'price' | 'investment_score' | 'projected_return_1y';
+export type SortField = 'name' | 'country' | 'region' | 'vintage' | 'category' | 'assortment' | 'price' | 'investment_score' | 'projected_return_1y' | 'source_country';
 export type SortDirection = 'asc' | 'desc' | null;
 
 const formatDrinkingWindow = (value: string | number): string => {
@@ -131,7 +131,7 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
         <Collapsible open={isExpanded} onOpenChange={() => toggleRow(wine.id)}>
           <div className="border-b border-border/50">
             <div className="grid grid-cols-12 gap-4 p-4 items-center text-sm">
-              <div className="col-span-4 flex items-center gap-2">
+              <div className="col-span-3 flex items-center gap-2">
                 <CollapsibleTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                     {isExpanded ? (
@@ -145,6 +145,15 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
                     <p className="font-medium text-foreground truncate">{wine.name}</p>
                     <p className="text-muted-foreground text-xs truncate">{wine.producer}</p>
                   </div>
+              </div>
+              
+              <div className="col-span-1 text-center">
+                <p className="text-2xl">
+                  {wine.source_country === 'SE' && '🇸🇪'}
+                  {wine.source_country === 'NO' && '🇳🇴'}
+                  {wine.source_country === 'FI' && '🇫🇮'}
+                  {!wine.source_country && '🇸🇪'}
+                </p>
               </div>
               
               <div className="col-span-2">
@@ -165,7 +174,7 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
               </div>
               
               <div className="col-span-1">
-                <p className="font-medium text-primary">{wine.price} kr</p>
+                <p className="font-medium text-primary">{wine.price} {wine.currency || 'SEK'}</p>
               </div>
               
               <div className="col-span-1">
@@ -284,7 +293,7 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
   const TableHeader = () => (
     <Card className="mb-4">
       <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 text-sm font-medium border-b">
-        <div className="col-span-4">
+        <div className="col-span-3">
           <Button
             variant="ghost"
             size="sm"
@@ -295,6 +304,17 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
             {getSortIcon('name')}
           </Button>
         </div>
+        <div className="col-span-1 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleSort('source_country')}
+            className="h-auto p-0 font-medium hover:bg-transparent"
+          >
+            Försäljningsland
+            {getSortIcon('source_country')}
+          </Button>
+        </div>
         <div className="col-span-2">
           <Button
             variant="ghost"
@@ -302,7 +322,7 @@ export const VirtualizedWineTable = ({ wines, onSort, sortField, sortDirection }
             onClick={() => handleSort('country')}
             className="h-auto p-0 font-medium hover:bg-transparent"
           >
-            Land/Region
+            Producerande land/Region
             {getSortIcon('country')}
           </Button>
         </div>

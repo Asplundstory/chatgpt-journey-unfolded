@@ -238,9 +238,11 @@ export type Database = {
           category: string | null
           country: string | null
           created_at: string
+          currency: string | null
           description: string | null
           drinking_window_end: number | null
           drinking_window_start: number | null
+          external_product_url: string | null
           id: string
           image_url: string | null
           investment_score: number | null
@@ -256,6 +258,8 @@ export type Database = {
           review_description: string | null
           review_points: number | null
           sales_start_date: string | null
+          source_country: string | null
+          source_monopoly: string | null
           storage_time_months: number | null
           taster_name: string | null
           updated_at: string
@@ -268,9 +272,11 @@ export type Database = {
           category?: string | null
           country?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           drinking_window_end?: number | null
           drinking_window_start?: number | null
+          external_product_url?: string | null
           id?: string
           image_url?: string | null
           investment_score?: number | null
@@ -286,6 +292,8 @@ export type Database = {
           review_description?: string | null
           review_points?: number | null
           sales_start_date?: string | null
+          source_country?: string | null
+          source_monopoly?: string | null
           storage_time_months?: number | null
           taster_name?: string | null
           updated_at?: string
@@ -298,9 +306,11 @@ export type Database = {
           category?: string | null
           country?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           drinking_window_end?: number | null
           drinking_window_start?: number | null
+          external_product_url?: string | null
           id?: string
           image_url?: string | null
           investment_score?: number | null
@@ -316,6 +326,8 @@ export type Database = {
           review_description?: string | null
           review_points?: number | null
           sales_start_date?: string | null
+          source_country?: string | null
+          source_monopoly?: string | null
           storage_time_months?: number | null
           taster_name?: string | null
           updated_at?: string

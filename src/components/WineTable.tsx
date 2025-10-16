@@ -35,7 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type SortField = 'name' | 'country' | 'region' | 'vintage' | 'category' | 'assortment' | 'price' | 'investment_score' | 'projected_return_1y';
+export type SortField = 'name' | 'country' | 'region' | 'vintage' | 'category' | 'assortment' | 'price' | 'investment_score' | 'projected_return_1y' | 'source_country';
 export type SortDirection = 'asc' | 'desc' | null;
 
 interface WineTableProps {
@@ -101,7 +101,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
     <Card>
       <CardContent className="p-0">
         <div className="w-full">
-          <div className="grid grid-cols-[40px_1fr_100px_120px_80px_120px_140px_80px_100px_80px] border-b bg-muted/30">
+          <div className="grid grid-cols-[40px_1fr_80px_100px_120px_80px_120px_140px_100px_100px_80px] border-b bg-muted/30">
             <div className="p-4"></div>
             <div className="p-4">
               <Button 
@@ -116,9 +116,18 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
               <Button 
                 variant="ghost" 
                 className="h-auto p-0 font-semibold justify-start"
+                onClick={() => handleSort('source_country')}
+              >
+                Försäljningsland {getSortIcon('source_country')}
+              </Button>
+            </div>
+            <div className="p-4">
+              <Button 
+                variant="ghost" 
+                className="h-auto p-0 font-semibold justify-start"
                 onClick={() => handleSort('country')}
               >
-                Land {getSortIcon('country')}
+                Producerande land {getSortIcon('country')}
               </Button>
             </div>
             <div className="p-4">
@@ -157,10 +166,10 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                 Sortiment {getSortIcon('assortment')}
               </Button>
             </div>
-            <div className="p-4 text-right">
+            <div className="p-4">
               <Button 
                 variant="ghost" 
-                className="h-auto p-0 font-semibold justify-end"
+                className="h-auto p-0 font-semibold justify-start"
                 onClick={() => handleSort('price')}
               >
                 Pris {getSortIcon('price')}
@@ -184,7 +193,7 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
             {wines.map((wine) => (
               <Collapsible key={wine.id} open={expandedRows.has(wine.id)} onOpenChange={() => toggleRow(wine.id)}>
                 <CollapsibleTrigger asChild>
-                  <div className="grid grid-cols-[40px_1fr_100px_120px_80px_120px_140px_80px_100px_80px] hover:bg-muted/50 cursor-pointer border-b">
+                  <div className="grid grid-cols-[40px_1fr_80px_100px_120px_80px_120px_140px_100px_100px_80px] hover:bg-muted/50 cursor-pointer border-b">
                     <div className="p-4 flex items-center">
                       {expandedRows.has(wine.id) ? (
                         <ChevronUp className="h-4 w-4" />
@@ -195,6 +204,12 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                     <div className="p-4">
                       <div className="font-semibold">{wine.name}</div>
                       <div className="text-sm text-muted-foreground">{wine.producer}</div>
+                    </div>
+                    <div className="p-4 flex items-center">
+                      {wine.source_country === 'SE' && '🇸🇪'}
+                      {wine.source_country === 'NO' && '🇳🇴'}
+                      {wine.source_country === 'FI' && '🇫🇮'}
+                      {!wine.source_country && '🇸🇪'}
                     </div>
                     <div className="p-4 flex items-center">{wine.country || 'N/A'}</div>
                     <div className="p-4 flex items-center">{wine.region || 'N/A'}</div>
@@ -213,8 +228,8 @@ export const WineTable = ({ wines, onSort, sortField, sortDirection }: WineTable
                         </Badge>
                       )}
                     </div>
-                    <div className="p-4 text-right font-semibold flex items-center justify-end">
-                      {wine.price} kr
+                    <div className="p-4 font-semibold flex items-center">
+                      {wine.price} {wine.currency || 'SEK'}
                     </div>
                     <div className="p-4 text-right flex items-center justify-end">
                       {wine.investment_score && (

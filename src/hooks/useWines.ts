@@ -27,6 +27,10 @@ export interface Wine {
   value_appreciation?: number;
   created_at?: string;
   updated_at?: string;
+  source_country?: 'SE' | 'NO' | 'FI';
+  source_monopoly?: 'Systembolaget' | 'Vinmonopolet' | 'Alko';
+  currency?: 'SEK' | 'NOK' | 'EUR';
+  external_product_url?: string;
 }
 
 export const useWines = () => {
@@ -57,7 +61,7 @@ export const useWines = () => {
         }
 
         if (data && data.length > 0) {
-          allWines = [...allWines, ...data];
+          allWines = [...allWines, ...data as Wine[]];
           from += batchSize;
           hasMore = data.length === batchSize;
         } else {
