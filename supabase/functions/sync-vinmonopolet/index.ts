@@ -152,10 +152,12 @@ Deno.serve(async (req) => {
     // Fetch products from Vinmonopolet API
     console.log('Fetching products from Vinmonopolet API...');
     
-    // Try the basic products endpoint
-    const apiUrl = 'https://api.vinmonopolet.no/products';
+    // Use the correct endpoint from API documentation
+    // This endpoint returns master data on products in basic, one lot, test and ordering ranges
+    // Updated approx 05:45 AM CET every day
+    const apiUrl = 'https://apis.vinmonopolet.no/products/v0/details-normal';
     
-    console.log('Trying endpoint:', apiUrl);
+    console.log('Using endpoint:', apiUrl);
     
     const response = await fetch(apiUrl, {
       method: 'GET',
