@@ -89,8 +89,21 @@ async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
     return { success: true, message: 'No wines found in this batch', wines_inserted: 0 };
   }
   
+  // First remove duplicates from the wines array by productId
+  const uniqueProductIds = new Set<string>();
+  const uniqueWineProducts = wines.filter(product => {
+    const id = product.basic.productId;
+    if (uniqueProductIds.has(id)) {
+      return false;
+    }
+    uniqueProductIds.add(id);
+    return true;
+  });
+  
+  console.log(`Removed ${wines.length - uniqueWineProducts.length} duplicate products`);
+  
   // Transform to our database schema
-  const winesForDb = wines.map(product => {
+  const winesForDb = uniqueWineProducts.map(product => {
     const metrics = generateInvestmentMetrics(product);
     
     return {
@@ -113,17 +126,12 @@ async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
     };
   });
   
-  // Remove duplicates by product_id
-  const uniqueWines = Array.from(
-    new Map(winesForDb.map(wine => [wine.product_id, wine])).values()
-  );
-  
-  console.log(`Inserting ${uniqueWines.length} wines into database`);
+  console.log(`Inserting ${winesForDb.length} unique wines into database`);
   
   // Upsert wines to database
   const { data, error } = await supabase
     .from('wines')
-    .upsert(uniqueWines, {
+    .upsert(winesForDb, {
       onConflict: 'product_id',
       ignoreDuplicates: false 
     })
@@ -134,11 +142,11 @@ async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
     throw error;
   }
   
-  console.log(`Successfully inserted ${uniqueWines.length} wines from Vinmonopolet`);
+  console.log(`Successfully inserted ${winesForDb.length} wines from Vinmonopolet`);
   
   return {
     success: true,
-    wines_inserted: uniqueWines.length,
+    wines_inserted: winesForDb.length,
     data
   };
 }
