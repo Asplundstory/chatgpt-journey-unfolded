@@ -54,8 +54,8 @@ export const DataSyncManager = () => {
         supabase.functions.invoke('sync-systembolaget-data', { body: {} }),
         // Firecrawl launch plans sync  
         supabase.functions.invoke('firecrawl-launch-sync', { body: {} }),
-        // Vinmonopolet data sync
-        supabase.functions.invoke('sync-vinmonopolet', { body: {} }),
+        // Vinmonopolet scraping with Firecrawl
+        supabase.functions.invoke('scrape-vinmonopolet', { body: {} }),
       ]);
 
       let successCount = 0;
@@ -205,15 +205,15 @@ export const DataSyncManager = () => {
   const handleVinmonopoletSync = async () => {
     updateLoadingState('vinmonopoletSync', true);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-vinmonopolet', {
+      const { data, error } = await supabase.functions.invoke('scrape-vinmonopolet', {
         body: {}
       });
 
       if (error) throw error;
 
       toast({
-        title: "Vinmonopolet synkning startad!",
-        description: "Hämtar produktdata från Vinmonopolet API...",
+        title: "Vinmonopolet skrapning startad!",
+        description: "Hämtar produktdata från Vinmonopolet med Firecrawl...",
       });
     } catch (error) {
       console.error('Vinmonopolet sync error:', error);
