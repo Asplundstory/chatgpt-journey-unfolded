@@ -48,14 +48,24 @@ function generateInvestmentMetrics(product: VinmonopoletProduct) {
 async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
   console.log(`Processing ${products.length} products from Vinmonopolet`);
   
-  // Filter for wines only
-  const wines = products.filter(product => 
-    product.productType?.toLowerCase().includes('vin') ||
-    product.productType?.toLowerCase().includes('wine') ||
-    product.productSubType?.toLowerCase().includes('rød') ||
-    product.productSubType?.toLowerCase().includes('hvit') ||
-    product.productSubType?.toLowerCase().includes('musserende')
-  );
+  // Log first product to see structure
+  if (products.length > 0) {
+    console.log('Sample product structure:', JSON.stringify(products[0], null, 2));
+  }
+  
+  // Filter for wines only - be more flexible with the filtering
+  const wines = products.filter(product => {
+    const type = (product.productType || '').toLowerCase();
+    const subType = (product.productSubType || '').toLowerCase();
+    
+    return type.includes('vin') || 
+           type.includes('wine') || 
+           subType.includes('rød') || 
+           subType.includes('hvit') || 
+           subType.includes('musserende') ||
+           subType.includes('rødvin') ||
+           subType.includes('hvitvin');
+  });
   
   console.log(`Found ${wines.length} wine products`);
   
