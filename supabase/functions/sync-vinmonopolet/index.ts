@@ -68,42 +68,27 @@ function generateInvestmentMetrics(product: VinmonopoletProduct) {
 async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
   console.log(`Processing ${products.length} products from Vinmonopolet`);
   
-  // Log sample products to see actual structure
-  console.log('Sample product 1:', JSON.stringify(products[0], null, 2));
-  console.log('Sample product 2:', JSON.stringify(products[100], null, 2));
+  // Log ALL available fields from sample products
+  console.log('Sample product 1 - ALL fields:');
+  console.log(JSON.stringify(products[0], null, 2));
   
-  // Collect all unique product types to understand the data
-  const mainTypes = new Set<string>();
-  const subTypes = new Set<string>();
+  console.log('Sample product 2 - ALL fields:');
+  console.log(JSON.stringify(products[100], null, 2));
   
-  products.forEach(product => {
-    if (product.classification?.mainProductTypeName) {
-      mainTypes.add(product.classification.mainProductTypeName);
-    }
-    if (product.classification?.subProductTypeName) {
-      subTypes.add(product.classification.subProductTypeName);
-    }
+  console.log('Sample product 3 - ALL fields:');
+  console.log(JSON.stringify(products[1000], null, 2));
+  
+  // Collect all unique top-level keys
+  const allKeys = new Set<string>();
+  products.slice(0, 100).forEach(product => {
+    Object.keys(product).forEach(key => allKeys.add(key));
   });
+  console.log('All unique top-level keys in products:', Array.from(allKeys));
   
-  console.log('All unique mainProductTypeNames:', Array.from(mainTypes));
-  console.log('All unique subProductTypeNames:', Array.from(subTypes));
+  // For now, just process first 50 products to see structure
+  const wines = products.slice(0, 50);
   
-  // Filter for wines only using the correct nested structure
-  const wines = products.filter(product => {
-    const mainType = (product.classification?.mainProductTypeName || '').toLowerCase();
-    const subType = (product.classification?.subProductTypeName || '').toLowerCase();
-    
-    return mainType.includes('vin') || 
-           mainType.includes('wine') || 
-           subType.includes('rød') || 
-           subType.includes('hvit') || 
-           subType.includes('musserende') ||
-           subType.includes('rødvin') ||
-           subType.includes('hvitvin') ||
-           subType.includes('rosevin');
-  });
-  
-  console.log(`Found ${wines.length} wine products`);
+  console.log(`Processing ${wines.length} sample products for now`);
   
   if (wines.length === 0) {
     return { success: true, message: 'No wines found in this batch', wines_inserted: 0 };
