@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.sync-vinmonopolet]
 verify_jwt = false
+
+[functions.scrape-vinmonopolet]
+verify_jwt = false
