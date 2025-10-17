@@ -48,26 +48,26 @@ function generateInvestmentMetrics(product: VinmonopoletProduct) {
 async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
   console.log(`Processing ${products.length} products from Vinmonopolet`);
   
-  // Log first product to see structure
+  // Log first 5 products to see structure and types
   if (products.length > 0) {
-    console.log('Sample product structure:', JSON.stringify(products[0], null, 2));
+    console.log('Sample products:', JSON.stringify(products.slice(0, 5).map(p => ({
+      name: p.productName,
+      type: p.productType,
+      subType: p.productSubType,
+      selection: p.productSelection
+    })), null, 2));
   }
   
-  // Filter for wines only - be more flexible with the filtering
-  const wines = products.filter(product => {
-    const type = (product.productType || '').toLowerCase();
-    const subType = (product.productSubType || '').toLowerCase();
-    
-    return type.includes('vin') || 
-           type.includes('wine') || 
-           subType.includes('rød') || 
-           subType.includes('hvit') || 
-           subType.includes('musserende') ||
-           subType.includes('rødvin') ||
-           subType.includes('hvitvin');
-  });
+  // Collect unique product types to understand the data
+  const uniqueTypes = [...new Set(products.map(p => p.productType).filter(Boolean))];
+  const uniqueSubTypes = [...new Set(products.map(p => p.productSubType).filter(Boolean))];
+  console.log('Unique product types:', uniqueTypes);
+  console.log('Unique product sub-types:', uniqueSubTypes.slice(0, 20));
   
-  console.log(`Found ${wines.length} wine products`);
+  // For now, take all products (we'll filter properly once we see the structure)
+  const wines = products.slice(0, 1000); // Limit to first 1000 for testing
+  
+  console.log(`Processing ${wines.length} products (limited for testing)`);
   
   if (wines.length === 0) {
     return { success: true, message: 'No wines found in this batch', wines_inserted: 0 };
