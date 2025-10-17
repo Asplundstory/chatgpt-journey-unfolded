@@ -53,9 +53,18 @@ function parseWineFromMarkdown(markdown: string, url: string): ScrapedWine | nul
     const name = nameMatch ? nameMatch[1].trim() : 'Unknown Wine';
     
     // Extract price (looking for NOK or kr patterns)
-    const priceMatch = markdown.match(/(?:kr|NOK)\s*([0-9,]+(?:\.[0-9]{2})?)/i) || 
-                       markdown.match(/([0-9,]+(?:\.[0-9]{2})?)\s*(?:kr|NOK)/i);
-    const price = priceMatch ? parseFloat(priceMatch[1].replace(',', '')) : 0;
+    // Norwegian format uses comma as decimal separator and space/period as thousand separator
+    const priceMatch = markdown.match(/(?:kr|NOK)\s*([0-9\s.]+[,.]?[0-9]{0,2})/i) || 
+                       markdown.match(/([0-9\s.]+[,.]?[0-9]{0,2})\s*(?:kr|NOK)/i);
+    let price = 0;
+    if (priceMatch) {
+      // Remove spaces and convert Norwegian decimal format (comma) to standard (dot)
+      const cleanPrice = priceMatch[1]
+        .replace(/\s/g, '')  // Remove spaces
+        .replace(/\./g, '')  // Remove thousand separators (periods)
+        .replace(',', '.');  // Convert decimal comma to dot
+      price = parseFloat(cleanPrice) || 0;
+    }
     
     // Extract country
     const countryMatch = markdown.match(/Land[:\s]+([^\n,]+)/i);
@@ -152,8 +161,8 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
         }
       }
       
-      // Rate limiting - wait 1 second between requests
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Rate limiting - wait 2 seconds between requests to avoid 429 errors
+      await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (error) {
       console.error(`Error scraping ${url}:`, error);
       continue;
