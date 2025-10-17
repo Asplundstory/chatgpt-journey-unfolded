@@ -85,10 +85,10 @@ async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
   });
   console.log('All unique top-level keys in products:', Array.from(allKeys));
   
-  // For now, just process first 50 products to see structure
-  const wines = products.slice(0, 50);
+  // Process all products (limited to 500 for now to avoid timeout)
+  const wines = products.slice(0, 500);
   
-  console.log(`Processing ${wines.length} sample products for now`);
+  console.log(`Processing ${wines.length} products from total of ${products.length}`);
   
   if (wines.length === 0) {
     return { success: true, message: 'No wines found in this batch', wines_inserted: 0 };
