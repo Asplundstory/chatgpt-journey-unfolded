@@ -122,7 +122,7 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
   const searchUrl = 'https://www.vinmonopolet.no/search?q=:relevance:mainCategory:rødvin';
   
   console.log('Scraping search page:', searchUrl);
-  const searchResponse = await firecrawl.scrapeUrl(searchUrl, {
+  const searchResponse = await firecrawl.scrape(searchUrl, {
     formats: ['markdown', 'links'],
   });
   
@@ -150,7 +150,7 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
   for (const url of limitedUrls) {
     try {
       console.log('Scraping product:', url);
-      const productResponse = await firecrawl.scrapeUrl(url, {
+      const productResponse = await firecrawl.scrape(url, {
         formats: ['markdown'],
         timeout: 30000, // 30 second timeout
       });
