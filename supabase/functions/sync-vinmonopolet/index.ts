@@ -6,27 +6,47 @@ const corsHeaders = {
 };
 
 interface VinmonopoletProduct {
-  productId: string;
-  productName: string;
-  productNameFull?: string;
-  alcoholContent?: number;
-  price?: number;
-  country?: string;
-  district?: string;
-  subDistrict?: string;
-  year?: number;
-  productType?: string;
-  productSubType?: string;
-  productSelection?: string;
-  description?: string;
-  wholesaler?: string;
-  distributor?: string;
-  url?: string;
+  basic: {
+    productId: string;
+    productShortName: string;
+    productLongName?: string;
+    volume?: number;
+    alcoholContent?: number;
+    vintage?: number;
+    productSelection?: string;
+  };
+  origins?: {
+    origin?: {
+      country?: string;
+      region?: string;
+      subRegion?: string;
+    };
+  };
+  classification?: {
+    mainProductType?: string;
+    mainProductTypeName?: string;
+    subProductType?: string;
+    subProductTypeName?: string;
+  };
+  description?: {
+    characteristics?: {
+      description?: string;
+    };
+  };
+  prices?: {
+    salesPrice?: number;
+  };
+  assortment?: {
+    assortmentText?: string;
+  };
+  distributors?: {
+    distributorName?: string;
+  };
 }
 
 function generateInvestmentMetrics(product: VinmonopoletProduct) {
-  const price = product.price || 0;
-  const age = product.year ? new Date().getFullYear() - product.year : 0;
+  const price = product.prices?.salesPrice || 0;
+  const age = product.basic.vintage ? new Date().getFullYear() - product.basic.vintage : 0;
   
   // Simple scoring algorithm based on price, age, and type
   let baseScore = Math.min(Math.floor(price / 100), 10);
@@ -40,34 +60,30 @@ function generateInvestmentMetrics(product: VinmonopoletProduct) {
     projected_return_5y: investmentScore * 4.5,
     projected_return_10y: investmentScore * 12.0,
     storage_time_months: age > 5 ? 120 : 60,
-    drinking_window_start: product.year ? product.year + 3 : null,
-    drinking_window_end: product.year ? product.year + 20 : null,
+    drinking_window_start: product.basic.vintage ? product.basic.vintage + 3 : null,
+    drinking_window_end: product.basic.vintage ? product.basic.vintage + 20 : null,
   };
 }
 
 async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
   console.log(`Processing ${products.length} products from Vinmonopolet`);
   
-  // Log first 5 products to see structure and types
-  if (products.length > 0) {
-    console.log('Sample products:', JSON.stringify(products.slice(0, 5).map(p => ({
-      name: p.productName,
-      type: p.productType,
-      subType: p.productSubType,
-      selection: p.productSelection
-    })), null, 2));
-  }
+  // Filter for wines only using the correct nested structure
+  const wines = products.filter(product => {
+    const mainType = (product.classification?.mainProductTypeName || '').toLowerCase();
+    const subType = (product.classification?.subProductTypeName || '').toLowerCase();
+    
+    return mainType.includes('vin') || 
+           mainType.includes('wine') || 
+           subType.includes('rød') || 
+           subType.includes('hvit') || 
+           subType.includes('musserende') ||
+           subType.includes('rødvin') ||
+           subType.includes('hvitvin') ||
+           subType.includes('rosevin');
+  });
   
-  // Collect unique product types to understand the data
-  const uniqueTypes = [...new Set(products.map(p => p.productType).filter(Boolean))];
-  const uniqueSubTypes = [...new Set(products.map(p => p.productSubType).filter(Boolean))];
-  console.log('Unique product types:', uniqueTypes);
-  console.log('Unique product sub-types:', uniqueSubTypes.slice(0, 20));
-  
-  // For now, take all products (we'll filter properly once we see the structure)
-  const wines = products.slice(0, 1000); // Limit to first 1000 for testing
-  
-  console.log(`Processing ${wines.length} products (limited for testing)`);
+  console.log(`Found ${wines.length} wine products`);
   
   if (wines.length === 0) {
     return { success: true, message: 'No wines found in this batch', wines_inserted: 0 };
@@ -78,31 +94,36 @@ async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
     const metrics = generateInvestmentMetrics(product);
     
     return {
-      product_id: `VM${product.productId}`, // Prefix with VM for Vinmonopolet
-      name: product.productName || product.productNameFull || 'Unnamed Wine',
-      producer: product.wholesaler || product.distributor || null,
-      category: product.productSubType || product.productType || 'Vin',
-      country: product.country || null,
-      region: product.district || product.subDistrict || null,
-      vintage: product.year || null,
-      alcohol_percentage: product.alcoholContent || null,
-      price: product.price || 0,
-      description: product.description || null,
-      assortment: product.productSelection || 'Ukjent',
+      product_id: `VM${product.basic.productId}`,
+      name: product.basic.productLongName || product.basic.productShortName || 'Unnamed Wine',
+      producer: product.distributors?.distributorName || null,
+      category: product.classification?.subProductTypeName || product.classification?.mainProductTypeName || 'Vin',
+      country: product.origins?.origin?.country || null,
+      region: product.origins?.origin?.region || product.origins?.origin?.subRegion || null,
+      vintage: product.basic.vintage || null,
+      alcohol_percentage: product.basic.alcoholContent || null,
+      price: product.prices?.salesPrice || 0,
+      description: product.description?.characteristics?.description || null,
+      assortment: product.assortment?.assortmentText || 'Ukjent',
       source_country: 'NO',
       source_monopoly: 'Vinmonopolet',
       currency: 'NOK',
-      external_product_url: product.url || null,
+      external_product_url: `https://www.vinmonopolet.no/p/${product.basic.productId}`,
       ...metrics,
     };
   });
   
-  console.log(`Inserting ${winesForDb.length} wines into database`);
+  // Remove duplicates by product_id
+  const uniqueWines = Array.from(
+    new Map(winesForDb.map(wine => [wine.product_id, wine])).values()
+  );
+  
+  console.log(`Inserting ${uniqueWines.length} wines into database`);
   
   // Upsert wines to database
   const { data, error } = await supabase
     .from('wines')
-    .upsert(winesForDb, { 
+    .upsert(uniqueWines, {
       onConflict: 'product_id',
       ignoreDuplicates: false 
     })
@@ -113,11 +134,11 @@ async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
     throw error;
   }
   
-  console.log(`Successfully inserted ${winesForDb.length} wines from Vinmonopolet`);
+  console.log(`Successfully inserted ${uniqueWines.length} wines from Vinmonopolet`);
   
   return {
     success: true,
-    wines_inserted: winesForDb.length,
+    wines_inserted: uniqueWines.length,
     data
   };
 }
