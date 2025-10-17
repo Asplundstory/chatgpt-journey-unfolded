@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
-import FirecrawlApp from 'https://esm.sh/@mendable/firecrawl-js@1.0.0';
+import FirecrawlApp from 'https://esm.sh/@mendable/firecrawl-js@4.3.6';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
