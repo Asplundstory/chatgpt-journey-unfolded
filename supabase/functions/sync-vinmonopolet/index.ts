@@ -68,6 +68,26 @@ function generateInvestmentMetrics(product: VinmonopoletProduct) {
 async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
   console.log(`Processing ${products.length} products from Vinmonopolet`);
   
+  // Log sample products to see actual structure
+  console.log('Sample product 1:', JSON.stringify(products[0], null, 2));
+  console.log('Sample product 2:', JSON.stringify(products[100], null, 2));
+  
+  // Collect all unique product types to understand the data
+  const mainTypes = new Set<string>();
+  const subTypes = new Set<string>();
+  
+  products.forEach(product => {
+    if (product.classification?.mainProductTypeName) {
+      mainTypes.add(product.classification.mainProductTypeName);
+    }
+    if (product.classification?.subProductTypeName) {
+      subTypes.add(product.classification.subProductTypeName);
+    }
+  });
+  
+  console.log('All unique mainProductTypeNames:', Array.from(mainTypes));
+  console.log('All unique subProductTypeNames:', Array.from(subTypes));
+  
   // Filter for wines only using the correct nested structure
   const wines = products.filter(product => {
     const mainType = (product.classification?.mainProductTypeName || '').toLowerCase();
