@@ -122,12 +122,13 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
   const searchUrl = 'https://www.vinmonopolet.no/search?q=:relevance:mainCategory:rødvin';
   
   console.log('Scraping search page:', searchUrl);
-  const searchResponse = await firecrawl.scrape(searchUrl, {
+  const searchResponse = await firecrawl.scrapeUrl(searchUrl, {
     formats: ['markdown', 'links'],
   });
   
   if (!searchResponse.success) {
-    throw new Error('Failed to scrape Vinmonopolet search page');
+    console.error('Firecrawl error:', searchResponse);
+    throw new Error(`Failed to scrape Vinmonopolet search page: ${JSON.stringify(searchResponse)}`);
   }
   
   // Extract product URLs from the search results
@@ -150,7 +151,7 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
   for (const url of limitedUrls) {
     try {
       console.log('Scraping product:', url);
-      const productResponse = await firecrawl.scrape(url, {
+      const productResponse = await firecrawl.scrapeUrl(url, {
         formats: ['markdown'],
         timeout: 30000, // 30 second timeout
       });
