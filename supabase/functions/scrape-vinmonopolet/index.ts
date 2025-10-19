@@ -124,7 +124,7 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
   console.log('Scraping search page:', searchUrl);
   const searchResponse = await firecrawl.scrapeUrl(searchUrl, {
     formats: ['markdown', 'links'],
-  });
+  }) as any;
   
   if (!searchResponse.success) {
     console.error('Firecrawl error:', searchResponse);
@@ -154,7 +154,7 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
       const productResponse = await firecrawl.scrapeUrl(url, {
         formats: ['markdown'],
         timeout: 30000, // 30 second timeout
-      });
+      }) as any;
       
       if (productResponse.success && productResponse.markdown) {
         const wine = parseWineFromMarkdown(productResponse.markdown, url);
