@@ -146,8 +146,8 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
   
   console.log(`Found ${productUrls.length} product URLs to scrape`);
   
-  // Limit to first 30 products to avoid timeouts
-  const limitedUrls = productUrls.slice(0, 30);
+  // Limit to first 10 products to avoid edge function timeouts
+  const limitedUrls = productUrls.slice(0, 10);
   const scrapedWines: ScrapedWine[] = [];
   
   // Scrape individual product pages
@@ -156,7 +156,7 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
       console.log('Scraping product:', url);
       const productResponse = await firecrawl.scrape(url, {
         formats: ['markdown'],
-        timeout: 30000, // 30 second timeout
+        timeout: 15000, // 15 second timeout
       }) as any;
       
       const markdown = productResponse.markdown || productResponse.data?.markdown;
@@ -167,8 +167,8 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
         }
       }
       
-      // Rate limiting - wait 4 seconds between requests to avoid timeouts
-      await new Promise(resolve => setTimeout(resolve, 4000));
+      // Rate limiting - wait 2 seconds between requests
+      await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (error) {
       console.error(`Error scraping ${url}:`, error);
       // Continue with next product even if this one fails
