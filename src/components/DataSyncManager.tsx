@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { SyncProgressCard } from "./SyncProgressCard";
 import { useSyncStatus } from "@/hooks/useSyncStatus";
 import { useSystembolagetSync } from "@/hooks/useSystembolagetSync";
+import { useVinmonopoletSync } from "@/hooks/useVinmonopoletSync";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SyncResult {
@@ -26,6 +27,7 @@ interface SyncResult {
 export const DataSyncManager = () => {
   const { toast } = useToast();
   const { isRunning } = useSyncStatus();
+  const { syncData: syncVinmonopolet, syncing: vinmonopoletSyncing } = useVinmonopoletSync();
   
   // Loading states for different sync operations
   const [loadingStates, setLoadingStates] = useState({
@@ -33,7 +35,6 @@ export const DataSyncManager = () => {
     githubSync: false,
     firecrawlSync: false,
     batchSync: false,
-    vinmonopoletSync: false,
   });
 
   const updateLoadingState = (key: keyof typeof loadingStates, value: boolean) => {
@@ -54,8 +55,8 @@ export const DataSyncManager = () => {
         supabase.functions.invoke('sync-systembolaget-data', { body: {} }),
         // Firecrawl launch plans sync  
         supabase.functions.invoke('firecrawl-launch-sync', { body: {} }),
-        // Vinmonopolet scraping with Firecrawl
-        supabase.functions.invoke('scrape-vinmonopolet', { body: {} }),
+        // Vinmonopolet API sync
+        supabase.functions.invoke('sync-vinmonopolet', { body: {} }),
       ]);
 
       let successCount = 0;
@@ -203,18 +204,22 @@ export const DataSyncManager = () => {
   };
 
   const handleVinmonopoletSync = async () => {
-    updateLoadingState('vinmonopoletSync', true);
     try {
-      const { data, error } = await supabase.functions.invoke('scrape-vinmonopolet', {
-        body: {}
-      });
-
-      if (error) throw error;
-
       toast({
-        title: "Vinmonopolet skrapning startad!",
-        description: "Hämtar produktdata från Vinmonopolet med Firecrawl...",
+        title: "Vinmonopolet synkning startad!",
+        description: "Hämtar alla produkter från Vinmonopolets API...",
       });
+
+      const result = await syncVinmonopolet();
+      
+      if (result?.success) {
+        toast({
+          title: "Vinmonopolet synkning slutförd!",
+          description: `${result.wines_inserted || 0} viner har synkroniserats från Vinmonopolet.`,
+        });
+      } else {
+        throw new Error(result?.error || 'Synkning misslyckades');
+      }
     } catch (error) {
       console.error('Vinmonopolet sync error:', error);
       toast({
@@ -222,12 +227,10 @@ export const DataSyncManager = () => {
         description: error instanceof Error ? error.message : "Kunde inte starta synkning",
         variant: "destructive",
       });
-    } finally {
-      updateLoadingState('vinmonopoletSync', false);
     }
   };
 
-  const isAnyLoading = Object.values(loadingStates).some(Boolean) || isRunning;
+  const isAnyLoading = Object.values(loadingStates).some(Boolean) || isRunning || vinmonopoletSyncing;
 
   return (
     <div className="space-y-6">
@@ -346,8 +349,8 @@ export const DataSyncManager = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🇳🇴</span>
                   <div>
-                    <p className="font-medium">Vinmonopolet</p>
-                    <p className="text-sm text-muted-foreground">Produktdata från Norge</p>
+                    <p className="font-medium">Vinmonopolet API</p>
+                    <p className="text-sm text-muted-foreground">Alla viner från Norge (officiellt API)</p>
                   </div>
                 </div>
                 <Button
@@ -355,7 +358,7 @@ export const DataSyncManager = () => {
                   onClick={handleVinmonopoletSync}
                   disabled={isAnyLoading}
                 >
-                  {loadingStates.vinmonopoletSync ? (
+                  {vinmonopoletSyncing ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Download className="h-4 w-4" />

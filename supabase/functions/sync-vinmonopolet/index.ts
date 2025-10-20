@@ -65,38 +65,22 @@ function generateInvestmentMetrics(product: VinmonopoletProduct) {
   };
 }
 
-async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
-  console.log(`Processing ${products.length} products from Vinmonopolet`);
+async function processProductBatch(
+  supabase: any, 
+  products: VinmonopoletProduct[], 
+  syncId: string,
+  batchNumber: number,
+  totalBatches: number
+): Promise<number> {
+  console.log(`Processing batch ${batchNumber}/${totalBatches} with ${products.length} products`);
   
-  // Log ALL available fields from sample products
-  console.log('Sample product 1 - ALL fields:');
-  console.log(JSON.stringify(products[0], null, 2));
-  
-  console.log('Sample product 2 - ALL fields:');
-  console.log(JSON.stringify(products[100], null, 2));
-  
-  console.log('Sample product 3 - ALL fields:');
-  console.log(JSON.stringify(products[1000], null, 2));
-  
-  // Collect all unique top-level keys
-  const allKeys = new Set<string>();
-  products.slice(0, 100).forEach(product => {
-    Object.keys(product).forEach(key => allKeys.add(key));
-  });
-  console.log('All unique top-level keys in products:', Array.from(allKeys));
-  
-  // Process all products (limited to 500 for now to avoid timeout)
-  const wines = products.slice(0, 500);
-  
-  console.log(`Processing ${wines.length} products from total of ${products.length}`);
-  
-  if (wines.length === 0) {
-    return { success: true, message: 'No wines found in this batch', wines_inserted: 0 };
+  if (products.length === 0) {
+    return 0;
   }
   
-  // First remove duplicates from the wines array by productId
+  // Remove duplicates within batch
   const uniqueProductIds = new Set<string>();
-  const uniqueWineProducts = wines.filter(product => {
+  const uniqueWineProducts = products.filter(product => {
     const id = product.basic.productId;
     if (uniqueProductIds.has(id)) {
       return false;
@@ -105,7 +89,7 @@ async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
     return true;
   });
   
-  console.log(`Removed ${wines.length - uniqueWineProducts.length} duplicate products`);
+  console.log(`Batch ${batchNumber}: Removed ${products.length - uniqueWineProducts.length} duplicates`);
   
   // Transform to our database schema
   const winesForDb = uniqueWineProducts.map(product => {
@@ -131,29 +115,70 @@ async function processProducts(supabase: any, products: VinmonopoletProduct[]) {
     };
   });
   
-  console.log(`Inserting ${winesForDb.length} unique wines into database`);
+  console.log(`Batch ${batchNumber}: Inserting ${winesForDb.length} wines`);
   
   // Upsert wines to database
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('wines')
     .upsert(winesForDb, {
       onConflict: 'product_id',
       ignoreDuplicates: false 
-    })
-    .select();
+    });
   
   if (error) {
-    console.error('Error inserting wines:', error);
+    console.error(`Batch ${batchNumber} error:`, error);
     throw error;
   }
   
-  console.log(`Successfully inserted ${winesForDb.length} wines from Vinmonopolet`);
+  // Update sync status
+  await supabase
+    .from('sync_status')
+    .update({
+      processed_products: batchNumber * 500,
+      wines_inserted: batchNumber * 500,
+      last_product_processed: winesForDb[winesForDb.length - 1]?.name || 'Unknown',
+    })
+    .eq('id', syncId);
   
-  return {
-    success: true,
-    wines_inserted: winesForDb.length,
-    data
-  };
+  console.log(`Batch ${batchNumber}: Successfully processed ${winesForDb.length} wines`);
+  
+  return winesForDb.length;
+}
+
+async function processAllProducts(
+  supabase: any, 
+  products: VinmonopoletProduct[], 
+  syncId: string
+): Promise<{ total_inserted: number }> {
+  console.log(`Starting batch processing of ${products.length} total products`);
+  
+  const BATCH_SIZE = 500;
+  const batches = [];
+  
+  // Split products into batches
+  for (let i = 0; i < products.length; i += BATCH_SIZE) {
+    batches.push(products.slice(i, i + BATCH_SIZE));
+  }
+  
+  console.log(`Created ${batches.length} batches of size ${BATCH_SIZE}`);
+  
+  let totalInserted = 0;
+  
+  // Process batches sequentially to avoid overwhelming the database
+  for (let i = 0; i < batches.length; i++) {
+    const inserted = await processProductBatch(
+      supabase, 
+      batches[i], 
+      syncId, 
+      i + 1, 
+      batches.length
+    );
+    totalInserted += inserted;
+  }
+  
+  console.log(`Finished processing all batches. Total wines inserted: ${totalInserted}`);
+  
+  return { total_inserted: totalInserted };
 }
 
 Deno.serve(async (req) => {
@@ -220,18 +245,28 @@ Deno.serve(async (req) => {
     const products: VinmonopoletProduct[] = await response.json();
     console.log(`Fetched ${products.length} total products from Vinmonopolet`);
     
-    // Process all products
-    const result = await processProducts(supabase, products);
+    // Update initial sync status
+    if (syncRecord) {
+      await supabase
+        .from('sync_status')
+        .update({
+          total_products: products.length,
+        })
+        .eq('id', syncRecord.id);
+    }
     
-    // Update sync status
+    // Process all products in batches
+    const result = await processAllProducts(supabase, products, syncRecord.id);
+    
+    // Update final sync status
     if (syncRecord) {
       await supabase
         .from('sync_status')
         .update({
           status: 'completed',
           completed_at: new Date().toISOString(),
-          total_products: products.length,
-          wines_inserted: result.wines_inserted,
+          wines_inserted: result.total_inserted,
+          processed_products: products.length,
         })
         .eq('id', syncRecord.id);
     }
@@ -239,9 +274,9 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Successfully synced ${result.wines_inserted} wines from Vinmonopolet`,
+        message: `Successfully synced ${result.total_inserted} wines from Vinmonopolet`,
         total_products: products.length,
-        wines_inserted: result.wines_inserted,
+        wines_inserted: result.total_inserted,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
