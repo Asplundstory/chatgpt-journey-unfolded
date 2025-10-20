@@ -126,14 +126,17 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
     formats: ['markdown', 'links'],
   }) as any;
   
-  if (!searchResponse.success) {
+  console.log('Search response structure:', Object.keys(searchResponse));
+  
+  // Firecrawl v4 returns data directly, not wrapped in success
+  if (!searchResponse.markdown && !searchResponse.data) {
     console.error('Firecrawl error:', searchResponse);
-    throw new Error(`Failed to scrape Vinmonopolet search page: ${JSON.stringify(searchResponse)}`);
+    throw new Error(`Failed to scrape Vinmonopolet search page: No markdown data received`);
   }
   
   // Extract product URLs from the search results
   const productUrls: string[] = [];
-  const links = searchResponse.links || [];
+  const links = searchResponse.links || searchResponse.data?.links || [];
   
   for (const link of links) {
     if (link.includes('/p/') && link.includes('vinmonopolet.no')) {
@@ -156,8 +159,9 @@ async function scrapeVinmonopoletProducts(firecrawl: any, supabase: any) {
         timeout: 30000, // 30 second timeout
       }) as any;
       
-      if (productResponse.success && productResponse.markdown) {
-        const wine = parseWineFromMarkdown(productResponse.markdown, url);
+      const markdown = productResponse.markdown || productResponse.data?.markdown;
+      if (markdown) {
+        const wine = parseWineFromMarkdown(markdown, url);
         if (wine && wine.price > 0) {
           scrapedWines.push(wine);
         }
