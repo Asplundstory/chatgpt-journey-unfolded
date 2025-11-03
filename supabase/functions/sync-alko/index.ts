@@ -20,31 +20,43 @@ interface AlkoProduct {
   Valikoima: string;
 }
 
-// Parse Alko TXT file (tab-delimited format)
+// Parse Alko file (pipe-delimited format)
 function parseAlkoTxt(text: string): AlkoProduct[] {
   try {
     const lines = text.split('\n').filter(line => line.trim());
     
-    // Find header row (starts with "Numero")
+    // Find header row (starts with "|Numero|")
     let headerIndex = -1;
     for (let i = 0; i < Math.min(lines.length, 20); i++) {
-      if (lines[i].includes('Numero\t')) {
+      if (lines[i].includes('|Numero|')) {
         headerIndex = i;
         break;
       }
     }
     
     if (headerIndex === -1) {
-      console.error('Could not find header row in TXT file');
+      console.error('Could not find header row in file');
       return [];
     }
     
-    const headers = lines[headerIndex].split('\t');
+    // Split by pipe and remove empty first/last elements
+    const headerLine = lines[headerIndex].split('|').filter(h => h.trim());
+    const headers = headerLine;
+    
+    console.log(`Found ${headers.length} headers:`, headers.slice(0, 5));
+    
     const products: AlkoProduct[] = [];
     
     // Parse data rows
     for (let i = headerIndex + 1; i < lines.length; i++) {
-      const values = lines[i].split('\t');
+      const line = lines[i];
+      if (!line.includes('|')) continue; // Skip non-data rows
+      
+      const values = line.split('|').filter((v, idx, arr) => {
+        // Remove empty first/last elements from split
+        return idx !== 0 && idx !== arr.length - 1;
+      });
+      
       if (values.length < headers.length - 5) continue; // Skip invalid rows
       
       const product: any = {};
@@ -55,10 +67,10 @@ function parseAlkoTxt(text: string): AlkoProduct[] {
       products.push(product as AlkoProduct);
     }
     
-    console.log(`Parsed ${products.length} products from Excel`);
+    console.log(`Parsed ${products.length} products from file`);
     return products;
   } catch (error) {
-    console.error('Error parsing Alko TXT file:', error);
+    console.error('Error parsing Alko file:', error);
     return [];
   }
 }
