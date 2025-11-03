@@ -16,6 +16,7 @@ import { SyncProgressCard } from "./SyncProgressCard";
 import { useSyncStatus } from "@/hooks/useSyncStatus";
 import { useSystembolagetSync } from "@/hooks/useSystembolagetSync";
 import { useVinmonopoletSync } from "@/hooks/useVinmonopoletSync";
+import { useAlkoSync } from "@/hooks/useAlkoSync";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SyncResult {
@@ -27,7 +28,9 @@ interface SyncResult {
 export const DataSyncManager = () => {
   const { toast } = useToast();
   const { isRunning } = useSyncStatus();
+  const { syncData: syncSystembolaget, syncing: systembolagetSyncing } = useSystembolagetSync();
   const { syncData: syncVinmonopolet, syncing: vinmonopoletSyncing } = useVinmonopoletSync();
+  const { syncData: syncAlko, syncing: alkoSyncing } = useAlkoSync();
   
   // Loading states for different sync operations
   const [loadingStates, setLoadingStates] = useState({
@@ -50,22 +53,24 @@ export const DataSyncManager = () => {
       });
 
       // Start all sync processes
-      const [githubResult, firecrawlResult, vinmonopoletResult] = await Promise.allSettled([
-        // GitHub data sync
+      const [systembolagetResult, firecrawlResult, vinmonopoletResult, alkoResult] = await Promise.allSettled([
+        // Systembolaget data sync
         supabase.functions.invoke('sync-systembolaget-data', { body: {} }),
         // Firecrawl launch plans sync  
         supabase.functions.invoke('firecrawl-launch-sync', { body: {} }),
         // Vinmonopolet API sync
         supabase.functions.invoke('sync-vinmonopolet', { body: {} }),
+        // Alko API sync
+        supabase.functions.invoke('sync-alko', { body: {} }),
       ]);
 
       let successCount = 0;
       let errorMessages: string[] = [];
 
-      if (githubResult.status === 'fulfilled' && !githubResult.value.error) {
+      if (systembolagetResult.status === 'fulfilled' && !systembolagetResult.value.error) {
         successCount++;
       } else {
-        errorMessages.push("GitHub data sync misslyckades");
+        errorMessages.push("Systembolaget sync misslyckades");
       }
 
       if (firecrawlResult.status === 'fulfilled' && !firecrawlResult.value.error) {
@@ -80,7 +85,13 @@ export const DataSyncManager = () => {
         errorMessages.push("Vinmonopolet sync misslyckades");
       }
 
-      if (successCount === 3) {
+      if (alkoResult.status === 'fulfilled' && !alkoResult.value.error) {
+        successCount++;
+      } else {
+        errorMessages.push("Alko sync misslyckades");
+      }
+
+      if (successCount === 4) {
         toast({
           title: "Fullständig synkning slutförd!",
           description: "Alla datakällor har synkroniserats framgångsrikt.",
@@ -88,7 +99,7 @@ export const DataSyncManager = () => {
       } else if (successCount > 0) {
         toast({
           title: "Delvis synkning slutförd",
-          description: `${successCount}/3 datakällor synkroniserade. ${errorMessages.join(', ')}`,
+          description: `${successCount}/4 datakällor synkroniserade. ${errorMessages.join(', ')}`,
           variant: "destructive",
         });
       } else {
@@ -110,28 +121,30 @@ export const DataSyncManager = () => {
     }
   };
 
-  const handleGitHubSync = async () => {
-    updateLoadingState('githubSync', true);
+  const handleSystembolagetSync = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('sync-systembolaget-data', {
-        body: {}
-      });
-
-      if (error) throw error;
-
       toast({
-        title: "GitHub synkning startad!",
-        description: "Systembolaget data från GitHub synkroniseras...",
+        title: "Systembolaget synkning startad!",
+        description: "Hämtar alla produkter från Systembolaget...",
       });
+
+      const result = await syncSystembolaget();
+      
+      if (result?.success) {
+        toast({
+          title: "Systembolaget synkning slutförd!",
+          description: `${result.winesInserted || 0} viner har synkroniserats från Systembolaget.`,
+        });
+      } else {
+        throw new Error(result?.error || 'Synkning misslyckades');
+      }
     } catch (error) {
-      console.error('GitHub sync error:', error);
+      console.error('Systembolaget sync error:', error);
       toast({
-        title: "GitHub synkning misslyckades",
+        title: "Systembolaget synkning misslyckades",
         description: error instanceof Error ? error.message : "Kunde inte starta synkning",
         variant: "destructive",
       });
-    } finally {
-      updateLoadingState('githubSync', false);
     }
   };
 
@@ -230,7 +243,34 @@ export const DataSyncManager = () => {
     }
   };
 
-  const isAnyLoading = Object.values(loadingStates).some(Boolean) || isRunning || vinmonopoletSyncing;
+  const handleAlkoSync = async () => {
+    try {
+      toast({
+        title: "Alko synkning startad!",
+        description: "Hämtar alla produkter från Alko...",
+      });
+
+      const result = await syncAlko();
+      
+      if (result?.success) {
+        toast({
+          title: "Alko synkning slutförd!",
+          description: `${result.wines_inserted || 0} viner har synkroniserats från Alko.`,
+        });
+      } else {
+        throw new Error(result?.error || 'Synkning misslyckades');
+      }
+    } catch (error) {
+      console.error('Alko sync error:', error);
+      toast({
+        title: "Alko synkning misslyckades",
+        description: error instanceof Error ? error.message : "Kunde inte starta synkning",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isAnyLoading = Object.values(loadingStates).some(Boolean) || isRunning || systembolagetSyncing || vinmonopoletSyncing || alkoSyncing;
 
   return (
     <div className="space-y-6">
@@ -246,7 +286,7 @@ export const DataSyncManager = () => {
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Synkronisera allt</h3>
             <p className="text-sm text-muted-foreground">
-              Hämta data från alla källor samtidigt (GitHub + Firecrawl + andra källor)
+              Hämta data från alla källor samtidigt (Systembolaget + Vinmonopolet + Alko + Firecrawl)
             </p>
             <Button
               onClick={handleFullSync}
@@ -278,21 +318,21 @@ export const DataSyncManager = () => {
             </p>
             
             <div className="grid gap-3">
-              {/* GitHub Data Source */}
+              {/* Systembolaget Data Source */}
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Globe className="h-5 w-5 text-blue-500" />
+                  <span className="text-2xl">🇸🇪</span>
                   <div>
-                    <p className="font-medium">GitHub Repository</p>
-                    <p className="text-sm text-muted-foreground">Systembolaget produktdata</p>
+                    <p className="font-medium">Systembolaget API</p>
+                    <p className="text-sm text-muted-foreground">Alla viner från Sverige</p>
                   </div>
                 </div>
                 <Button
                   variant="outline"
-                  onClick={handleGitHubSync}
+                  onClick={handleSystembolagetSync}
                   disabled={isAnyLoading}
                 >
-                  {loadingStates.githubSync ? (
+                  {systembolagetSyncing ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Download className="h-4 w-4" />
@@ -350,7 +390,7 @@ export const DataSyncManager = () => {
                   <span className="text-2xl">🇳🇴</span>
                   <div>
                     <p className="font-medium">Vinmonopolet API</p>
-                    <p className="text-sm text-muted-foreground">Alla viner från Norge (officiellt API)</p>
+                    <p className="text-sm text-muted-foreground">Alla viner från Norge</p>
                   </div>
                 </div>
                 <Button
@@ -359,6 +399,28 @@ export const DataSyncManager = () => {
                   disabled={isAnyLoading}
                 >
                   {vinmonopoletSyncing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+              {/* Alko Data Source */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🇫🇮</span>
+                  <div>
+                    <p className="font-medium">Alko API</p>
+                    <p className="text-sm text-muted-foreground">Alla viner från Finland</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleAlkoSync}
+                  disabled={isAnyLoading}
+                >
+                  {alkoSyncing ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Download className="h-4 w-4" />

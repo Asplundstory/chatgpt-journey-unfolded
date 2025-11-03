@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.scrape-vinmonopolet]
 verify_jwt = false
+
+[functions.sync-alko]
+verify_jwt = false
