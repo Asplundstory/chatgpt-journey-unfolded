@@ -18,9 +18,9 @@ export const useAlkoSync = () => {
       setSyncing(true);
       setResult(null);
 
-      console.log('Starting Alko data sync...');
+      console.log('Starting Alko data scraping...');
       
-      const { data, error } = await supabase.functions.invoke('sync-alko', {
+      const { data, error } = await supabase.functions.invoke('scrape-alko', {
         body: {}
       });
 
