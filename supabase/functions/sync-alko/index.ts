@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,57 +21,59 @@ interface AlkoProduct {
   Valikoima: string;
 }
 
-// Parse Alko file (pipe-delimited format)
-function parseAlkoTxt(text: string): AlkoProduct[] {
+// Parse Alko Excel file
+function parseAlkoExcel(arrayBuffer: ArrayBuffer): AlkoProduct[] {
   try {
-    const lines = text.split('\n').filter(line => line.trim());
+    // Read the Excel file
+    const workbook = XLSX.read(arrayBuffer);
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
     
-    // Find header row (starts with "|Numero|")
+    // Convert to JSON with header row
+    const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+    
+    console.log(`Excel file has ${data.length} rows`);
+    
+    // Find header row (contains "Numero")
     let headerIndex = -1;
-    for (let i = 0; i < Math.min(lines.length, 20); i++) {
-      if (lines[i].includes('|Numero|')) {
+    for (let i = 0; i < Math.min(data.length, 20); i++) {
+      const row = data[i];
+      if (row && row.length > 0 && String(row[0]).includes('Numero')) {
         headerIndex = i;
         break;
       }
     }
     
     if (headerIndex === -1) {
-      console.error('Could not find header row in file');
+      console.error('Could not find header row in Excel file');
       return [];
     }
     
-    // Split by pipe and remove empty first/last elements
-    const headerLine = lines[headerIndex].split('|').filter(h => h.trim());
-    const headers = headerLine;
-    
-    console.log(`Found ${headers.length} headers:`, headers.slice(0, 5));
+    const headers = data[headerIndex];
+    console.log(`Found ${headers.length} headers`);
     
     const products: AlkoProduct[] = [];
     
     // Parse data rows
-    for (let i = headerIndex + 1; i < lines.length; i++) {
-      const line = lines[i];
-      if (!line.includes('|')) continue; // Skip non-data rows
-      
-      const values = line.split('|').filter((v, idx, arr) => {
-        // Remove empty first/last elements from split
-        return idx !== 0 && idx !== arr.length - 1;
-      });
-      
-      if (values.length < headers.length - 5) continue; // Skip invalid rows
+    for (let i = headerIndex + 1; i < data.length; i++) {
+      const row = data[i];
+      if (!row || row.length === 0) continue;
       
       const product: any = {};
-      headers.forEach((header, index) => {
-        product[header] = values[index] || '';
+      headers.forEach((header: string, index: number) => {
+        product[header] = row[index] != null ? String(row[index]) : '';
       });
       
-      products.push(product as AlkoProduct);
+      // Only add if it has a product number
+      if (product.Numero) {
+        products.push(product as AlkoProduct);
+      }
     }
     
-    console.log(`Parsed ${products.length} products from file`);
+    console.log(`Parsed ${products.length} products from Excel`);
     return products;
   } catch (error) {
-    console.error('Error parsing Alko file:', error);
+    console.error('Error parsing Alko Excel file:', error);
     return [];
   }
 }
@@ -187,16 +190,18 @@ async function performSync(supabase: any, syncId: string) {
     // Use the Excel file URL (it's actually tab-delimited text inside)
     const url = 'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/alkon-hinnasto-tekstitiedostona.xlsx';
     
-    console.log('Downloading file from:', url);
+    console.log('Downloading Excel file from:', url);
     const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`Failed to download file: ${response.status}`);
     }
     
-    // Get the file as text (it's tab-delimited even though extension is .xlsx)
-    const text = await response.text();
-    const allProducts = parseAlkoTxt(text);
+    // Get the file as ArrayBuffer for Excel parsing
+    const arrayBuffer = await response.arrayBuffer();
+    console.log(`Downloaded ${arrayBuffer.byteLength} bytes`);
+    
+    const allProducts = parseAlkoExcel(arrayBuffer);
     
     if (allProducts.length === 0) {
       throw new Error('No products found in file');
