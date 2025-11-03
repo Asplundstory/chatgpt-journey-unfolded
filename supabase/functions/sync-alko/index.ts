@@ -148,7 +148,7 @@ async function processProductBatch(supabase: any, products: AlkoProduct[], syncI
     return 0;
   }
 
-  const batchSize = 50;
+  const batchSize = 100;
   let totalInserted = 0;
 
   for (let i = 0; i < wineProducts.length; i += batchSize) {
@@ -282,9 +282,13 @@ Deno.serve(async (req) => {
 
     console.log(`Created sync record: ${syncRecord.id}`);
 
-    performSync(supabase, syncRecord.id).catch(error => {
-      console.error('Background Alko sync failed:', error);
-    });
+    // Use waitUntil to run the sync in background without blocking the response
+    // @ts-ignore - EdgeRuntime is available in Deno Deploy
+    EdgeRuntime.waitUntil(
+      performSync(supabase, syncRecord.id).catch(error => {
+        console.error('Background Alko sync failed:', error);
+      })
+    );
 
     return new Response(JSON.stringify({
       success: true,
