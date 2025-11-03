@@ -167,11 +167,20 @@ async function performSync(supabase: any, syncId: string) {
 
     console.log('Fetching Alko product data...');
     
-    // Try current price list URL (update month/year as needed)
-    const urls = [
-      'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Muut%20ladattavat%20tiedostot/Hinnastot/alkon-hinnasto-tekstitiedostona.txt',
-      'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Muut%20ladattavat%20tiedostot/Hinnastot/Alkon%20hinnasto%20tekstitiedostona.txt'
-    ];
+    // Try current date-based URL format used by Alko
+    const now = new Date();
+    const date = now.getDate();
+    const month = now.getMonth() + 1;
+    
+    // Generate URLs for current date and previous few days
+    const urls: string[] = [];
+    for (let daysBack = 0; daysBack < 7; daysBack++) {
+      const checkDate = new Date(now);
+      checkDate.setDate(checkDate.getDate() - daysBack);
+      const d = checkDate.getDate();
+      const m = checkDate.getMonth() + 1;
+      urls.push(`https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Muut%20ladattavat%20tiedostot/Hinnastot/alkon-hinnasto-tekstitiedostona-${d}-${m}.txt`);
+    }
     
     let allProducts: AlkoProduct[] = [];
     let fetchSuccess = false;
@@ -190,7 +199,7 @@ async function performSync(supabase: any, syncId: string) {
         allProducts = parseAlkoTextFile(text);
         
         if (allProducts.length > 0) {
-          console.log(`Successfully fetched ${allProducts.length} products`);
+          console.log(`Successfully fetched ${allProducts.length} products from ${url}`);
           fetchSuccess = true;
           break;
         }
@@ -200,7 +209,7 @@ async function performSync(supabase: any, syncId: string) {
     }
     
     if (!fetchSuccess || allProducts.length === 0) {
-      throw new Error('Failed to fetch Alko product data from all URLs');
+      throw new Error('Failed to fetch Alko product data. The file might have been moved or the date format changed.');
     }
 
     await supabase
