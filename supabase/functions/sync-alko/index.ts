@@ -20,8 +20,8 @@ interface AlkoProduct {
   Valikoima: string;
 }
 
-// Parse Alko Excel file (tab-delimited format)
-function parseAlkoExcel(text: string): AlkoProduct[] {
+// Parse Alko TXT file (tab-delimited format)
+function parseAlkoTxt(text: string): AlkoProduct[] {
   try {
     const lines = text.split('\n').filter(line => line.trim());
     
@@ -35,7 +35,7 @@ function parseAlkoExcel(text: string): AlkoProduct[] {
     }
     
     if (headerIndex === -1) {
-      console.error('Could not find header row in Excel file');
+      console.error('Could not find header row in TXT file');
       return [];
     }
     
@@ -58,7 +58,7 @@ function parseAlkoExcel(text: string): AlkoProduct[] {
     console.log(`Parsed ${products.length} products from Excel`);
     return products;
   } catch (error) {
-    console.error('Error parsing Alko Excel file:', error);
+    console.error('Error parsing Alko TXT file:', error);
     return [];
   }
 }
@@ -172,22 +172,22 @@ async function performSync(supabase: any, syncId: string) {
 
     console.log('Fetching Alko product data...');
     
-    // Use the Excel file URL that Alko provides
-    const url = 'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/alkon-hinnasto-tekstitiedostona.xlsx';
+    // Use the TXT file URL (tab-delimited version)
+    const url = 'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/alkon-hinnasto-tekstitiedostona.txt';
     
-    console.log('Downloading Excel file from:', url);
+    console.log('Downloading TXT file from:', url);
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Failed to download Excel file: ${response.status}`);
+      throw new Error(`Failed to download TXT file: ${response.status}`);
     }
     
     // Get the file as text (tab-delimited)
     const text = await response.text();
-    const allProducts = parseAlkoExcel(text);
+    const allProducts = parseAlkoTxt(text);
     
     if (allProducts.length === 0) {
-      throw new Error('No products found in Excel file');
+      throw new Error('No products found in TXT file');
     }
     
     console.log(`Successfully parsed ${allProducts.length} products`);
