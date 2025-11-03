@@ -6,64 +6,66 @@ const corsHeaders = {
 };
 
 interface AlkoProduct {
-  id: string;
-  name: string;
-  producer: string;
-  volume: string;
-  price: string;
-  pricePerLiter: string;
-  isNew: string;
-  categoryCode: string;
-  type: string;
-  specialGroup: string;
-  country: string;
-  region: string;
-  vintage: string;
-  grapes: string;
-  description: string;
-  alcoholPercentage: string;
-  selection: string;
+  Numero: string;
+  Nimi: string;
+  Valmistaja: string;
+  Pullokoko: string;
+  Hinta: string;
+  'Alkoholi-%': string;
+  Tyyppi: string;
+  Valmistusmaa: string;
+  Alue: string;
+  Vuosikerta: string;
+  Luonnehdinta: string;
+  Valikoima: string;
 }
 
-function parseAlkoTextFile(text: string): AlkoProduct[] {
-  const lines = text.split('\n');
-  const products: AlkoProduct[] = [];
-  
-  // Skip first 2 lines (headers)
-  for (let i = 2; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+// Parse Alko Excel file (tab-delimited format)
+function parseAlkoExcel(text: string): AlkoProduct[] {
+  try {
+    const lines = text.split('\n').filter(line => line.trim());
     
-    const parts = line.split('\t');
-    if (parts.length < 10) continue;
+    // Find header row (starts with "Numero")
+    let headerIndex = -1;
+    for (let i = 0; i < Math.min(lines.length, 20); i++) {
+      if (lines[i].includes('Numero\t')) {
+        headerIndex = i;
+        break;
+      }
+    }
     
-    products.push({
-      id: parts[0] || '',
-      name: parts[1] || '',
-      producer: parts[2] || '',
-      volume: parts[3] || '',
-      price: parts[4] || '',
-      pricePerLiter: parts[5] || '',
-      isNew: parts[6] || '',
-      categoryCode: parts[7] || '',
-      type: parts[8] || '',
-      specialGroup: parts[9] || '',
-      country: parts[10] || '',
-      region: parts[11] || '',
-      vintage: parts[12] || '',
-      grapes: parts[16] || '',
-      description: parts[17] || '',
-      alcoholPercentage: parts[20] || '',
-      selection: parts[28] || ''
-    });
+    if (headerIndex === -1) {
+      console.error('Could not find header row in Excel file');
+      return [];
+    }
+    
+    const headers = lines[headerIndex].split('\t');
+    const products: AlkoProduct[] = [];
+    
+    // Parse data rows
+    for (let i = headerIndex + 1; i < lines.length; i++) {
+      const values = lines[i].split('\t');
+      if (values.length < headers.length - 5) continue; // Skip invalid rows
+      
+      const product: any = {};
+      headers.forEach((header, index) => {
+        product[header] = values[index] || '';
+      });
+      
+      products.push(product as AlkoProduct);
+    }
+    
+    console.log(`Parsed ${products.length} products from Excel`);
+    return products;
+  } catch (error) {
+    console.error('Error parsing Alko Excel file:', error);
+    return [];
   }
-  
-  return products;
 }
 
 function generateInvestmentMetrics(product: AlkoProduct) {
-  const price = parseFloat(product.price.replace(',', '.')) || 0;
-  const vintage = parseInt(product.vintage) || new Date().getFullYear();
+  const price = parseFloat(product.Hinta.replace(',', '.')) || 0;
+  const vintage = parseInt(product.Vuosikerta) || new Date().getFullYear();
   const currentYear = new Date().getFullYear();
   const age = currentYear - vintage;
 
@@ -89,15 +91,43 @@ function generateInvestmentMetrics(product: AlkoProduct) {
 async function processProductBatch(supabase: any, products: AlkoProduct[], syncId: string) {
   console.log(`Processing batch of ${products.length} Alko products...`);
   
-  // Filter for wine products only
-  const wineProducts = products.filter(product => {
-    const type = product.type?.toLowerCase() || '';
-    return type.includes('viini') || type.includes('wine') || 
-           type.includes('punaviini') || type.includes('valkoviini') ||
-           type.includes('roseeviini') || type.includes('kuohuviini');
-  });
+  // Filter for wines only and transform to database format
+  const wineProducts = products
+    .filter(p => {
+      const categoryLower = (p.Tyyppi || '').toLowerCase();
+      return categoryLower.includes('viini') || 
+             categoryLower.includes('wine') ||
+             categoryLower.includes('punaviinit') ||
+             categoryLower.includes('valkoviinit') ||
+             categoryLower.includes('roseeviinit') ||
+             categoryLower.includes('kuohuviinit');
+    })
+    .map(product => {
+      const vintage = product.Vuosikerta ? parseInt(product.Vuosikerta) : null;
+      const price = parseFloat(product.Hinta.replace(',', '.'));
+      const alcohol = product['Alkoholi-%'] ? parseFloat(product['Alkoholi-%'].replace(',', '.')) : null;
+      
+      return {
+        product_id: `ALKO-${product.Numero}`,
+        name: product.Nimi,
+        producer: product.Valmistaja || null,
+        category: product.Tyyppi || null,
+        country: product.Valmistusmaa || null,
+        region: product.Alue || null,
+        vintage: vintage,
+        alcohol_percentage: alcohol,
+        price: price,
+        description: product.Luonnehdinta || null,
+        external_product_url: `https://www.alko.fi/tuotteet/${product.Numero}`,
+        source_monopoly: 'Alko',
+        source_country: 'FI',
+        currency: 'EUR',
+        assortment: product.Valikoima || null,
+        ...generateInvestmentMetrics(product)
+      };
+    });
 
-  console.log(`Found ${wineProducts.length} wine products in this batch`);
+  console.log(`Found ${wineProducts.length} wine products to process`);
 
   if (wineProducts.length === 0) {
     return 0;
@@ -108,44 +138,19 @@ async function processProductBatch(supabase: any, products: AlkoProduct[], syncI
 
   for (let i = 0; i < wineProducts.length; i += batchSize) {
     const batch = wineProducts.slice(i, i + batchSize);
-    
-    const transformedWines = batch.map(product => {
-      const metrics = generateInvestmentMetrics(product);
-      const price = parseFloat(product.price.replace(',', '.')) || 0;
-      const alcoholPercentage = parseFloat(product.alcoholPercentage.replace(',', '.')) || null;
-      const vintage = parseInt(product.vintage) || null;
-      
-      return {
-        product_id: `ALKO-${product.id}`,
-        name: product.name,
-        producer: product.producer,
-        category: product.type,
-        country: product.country,
-        region: product.region,
-        vintage: vintage,
-        alcohol_percentage: alcoholPercentage,
-        price: price,
-        description: product.description || null,
-        source_monopoly: 'Alko',
-        currency: 'EUR',
-        source_country: 'FI',
-        assortment: product.selection,
-        ...metrics
-      };
-    });
 
     try {
       const { error } = await supabase
         .from('wines')
-        .upsert(transformedWines, { onConflict: 'product_id' });
+        .upsert(batch, { onConflict: 'product_id' });
 
       if (error) {
         console.error('Error inserting Alko wines:', error);
         continue;
       }
 
-      totalInserted += transformedWines.length;
-      console.log(`Inserted ${transformedWines.length} Alko wines. Total: ${totalInserted}`);
+      totalInserted += batch.length;
+      console.log(`Inserted ${batch.length} Alko wines. Total: ${totalInserted}`);
     } catch (error) {
       console.error('Error processing Alko batch:', error);
     }
@@ -167,50 +172,25 @@ async function performSync(supabase: any, syncId: string) {
 
     console.log('Fetching Alko product data...');
     
-    // Try current date-based URL format used by Alko
-    const now = new Date();
-    const date = now.getDate();
-    const month = now.getMonth() + 1;
+    // Use the Excel file URL that Alko provides
+    const url = 'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/alkon-hinnasto-tekstitiedostona.xlsx';
     
-    // Generate URLs for current date and previous few days
-    const urls: string[] = [];
-    for (let daysBack = 0; daysBack < 7; daysBack++) {
-      const checkDate = new Date(now);
-      checkDate.setDate(checkDate.getDate() - daysBack);
-      const d = checkDate.getDate();
-      const m = checkDate.getMonth() + 1;
-      urls.push(`https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Muut%20ladattavat%20tiedostot/Hinnastot/alkon-hinnasto-tekstitiedostona-${d}-${m}.txt`);
+    console.log('Downloading Excel file from:', url);
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to download Excel file: ${response.status}`);
     }
     
-    let allProducts: AlkoProduct[] = [];
-    let fetchSuccess = false;
+    // Get the file as text (tab-delimited)
+    const text = await response.text();
+    const allProducts = parseAlkoExcel(text);
     
-    for (const url of urls) {
-      try {
-        console.log(`Trying URL: ${url}`);
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-          console.log(`Failed with status: ${response.status}`);
-          continue;
-        }
-        
-        const text = await response.text();
-        allProducts = parseAlkoTextFile(text);
-        
-        if (allProducts.length > 0) {
-          console.log(`Successfully fetched ${allProducts.length} products from ${url}`);
-          fetchSuccess = true;
-          break;
-        }
-      } catch (error) {
-        console.error(`Error fetching from ${url}:`, error);
-      }
+    if (allProducts.length === 0) {
+      throw new Error('No products found in Excel file');
     }
     
-    if (!fetchSuccess || allProducts.length === 0) {
-      throw new Error('Failed to fetch Alko product data. The file might have been moved or the date format changed.');
-    }
+    console.log(`Successfully parsed ${allProducts.length} products`);
 
     await supabase
       .from('sync_status')
