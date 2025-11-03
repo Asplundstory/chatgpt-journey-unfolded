@@ -172,22 +172,22 @@ async function performSync(supabase: any, syncId: string) {
 
     console.log('Fetching Alko product data...');
     
-    // Use the TXT file URL (tab-delimited version)
-    const url = 'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/alkon-hinnasto-tekstitiedostona.txt';
+    // Use the Excel file URL (it's actually tab-delimited text inside)
+    const url = 'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/alkon-hinnasto-tekstitiedostona.xlsx';
     
-    console.log('Downloading TXT file from:', url);
+    console.log('Downloading file from:', url);
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Failed to download TXT file: ${response.status}`);
+      throw new Error(`Failed to download file: ${response.status}`);
     }
     
-    // Get the file as text (tab-delimited)
+    // Get the file as text (it's tab-delimited even though extension is .xlsx)
     const text = await response.text();
     const allProducts = parseAlkoTxt(text);
     
     if (allProducts.length === 0) {
-      throw new Error('No products found in TXT file');
+      throw new Error('No products found in file');
     }
     
     console.log(`Successfully parsed ${allProducts.length} products`);
